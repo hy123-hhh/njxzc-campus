@@ -7,6 +7,8 @@ on:
     paths:
       - 'data/layout.csv'
       - 'scripts/build_layout.py'
+      - 'index.html'
+      - 'vendor/**'
       - '.github/workflows/build-model.yml'
 
 permissions:

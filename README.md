@@ -19,10 +19,13 @@ refs/                 公开参考图原件（含高清底图与官方总体规�
 docs/                 参考图核对页、核对表、建模规范
 data/layout.csv       布局元素清单与坐标（可编辑，用于校准）
 scripts/build_layout.py  纯标准库 Python 建模脚本，生成 glTF 2.0 GLB
-models/               云端生成的模型产物（本地不生成）
+models/               云端生成的模型产物（本地不生成，可 pull 同步查看）
+vendor/three/         three.js 与加载器（已本地化，页面不依赖任何 CDN）
 .github/workflows/    build-model.yml：云端建模 + Pages 部署
 index.html            GitHub Pages 在线预览首页
 ```
+
+预览页的 3D 组件全部来自仓库内 `vendor/three/`，无需外网 CDN，离线也能加载模型。
 
 ## 参考图来源
 
