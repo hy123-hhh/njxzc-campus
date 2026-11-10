@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方山校区三维建模 · 资料与在线预览</title>
+<style>
+  body{margin:0;padding:28px 36px 60px;background:#fff;color:#1f2328;font:14px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;max-width:1200px}
+  h1{font-size:21px;font-weight:600;margin:0 0 4px}
+  h2{font-size:16px;font-weight:600;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid #d8dee4}
+  h3{font-size:14px;font-weight:600;margin:0 0 6px}
+  p{margin:6px 0}
+  a{color:#0969da;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .sub{color:#57606a;font-size:13px}
+  .status{background:#f6f8fa;border:1px solid #d8dee4;border-left:3px solid #1f6feb;padding:10px 14px;margin:14px 0 22px;font-size:13px}
+  .split{display:flex;gap:20px;flex-wrap:wrap}
+  .pane{flex:1 1 420px;min-width:320px;border:1px solid #d8dee4;padding:12px}
+  .pane img{width:100%;display:block;border:1px solid #eaeef2}
+  .pane .cap{font-size:12.5px;color:#57606a;margin-top:8px}
+  #viewer{height:420px;background:#f6f8fa;border:1px solid #eaeef2;display:flex;align-items:center;justify-content:center;text-align:center;color:#57606a;font-size:13px}
+  #viewer canvas{display:block}
+  .gallery{display:flex;gap:16px;flex-wrap:wrap}
+  .gallery figure{margin:0;border:1px solid #d8dee4;padding:10px;width:280px}
+  .gallery img{width:100%;display:block;border:1px solid #eaeef2}
+  .gallery figcaption{font-size:12.5px;margin-top:8px;color:#57606a}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}
+  th,td{border:1px solid #d8dee4;padding:6px 9px;text-align:left}
+  th{background:#f6f8fa;font-weight:600}
+  ul{margin:6px 0;padding-left:22px}
+  code{background:#f6f8fa;border:1px solid #eaeef2;padding:1px 5px;font-size:12.5px}
+  .note{font-size:12.5px;color:#57606a;background:#f6f8fa;border:1px solid #eaeef2;padding:10px 14px;margin:12px 0}
+</style>
+</head>
+<body>
+
+<h1>南京晓庄学院（方山校区）三维建模 · 资料与在线预览</h1>
+<p class="sub">GitHub 仓库首页 · 参考图、布局数据、云端模型</p>
+
+<div class="status">
+<b>状态：</b>阶段 2/3。公开参考图已整理并经核对确认；仓库资料与云端建模管线已就位。<br>
+<b>模型由 GitHub Actions 在云端生成</b>，本地不运行渲染或构建；<code>models/</code> 在本地不含模型文件。<br>
+布局坐标按 R1 总平面图目测归一化，属<b>布局级示意，非测绘坐标</b>，可在 <code>data/layout.csv</code> 校准。
+</div>
+
+<h2>一、平面图与三维模型对照</h2>
+<div class="split">
+  <div class="pane">
+    <h3>R1 · 官方彩色总平面规划图（基准）</h3>
+    <img src="refs/official_01_plan.jpg" alt="方山校区总平面规划图">
+    <p class="cap">来源：学校发展规划处。含比例尺、指北针、建筑编号图例、新建/保留建筑分色。<a href="refs/official_01_plan_d.jpg" target="_blank">查看高清版</a></p>
+  </div>
+  <div class="pane">
+    <h3>三维布局模型（云端生成）</h3>
+    <div id="viewer">正在检查模型文件…</div>
+    <p class="cap">模型文件 <code>models/campus_layout.glb</code> 由云端 workflow 生成；若尚未生成，此处显示占位。可拖动旋转、滚轮缩放。</p>
+  </div>
+</div>
+
+<h2>二、核心参考图</h2>
+<div class="gallery">
+  <figure>
+    <img src="refs/official_01_plan.jpg" alt="总平面规划图">
+    <figcaption>R1 总平面规划图（几何基准）<br><a href="refs/official_01_plan_d.jpg">高清 4604×6123</a></figcaption>
+  </figure>
+  <figure>
+    <img src="refs/official_02_birdview.jpg" alt="鸟瞰效果图">
+    <figcaption>R2 鸟瞰效果图（形体参考）<br><a href="refs/official_02_birdview_d.jpg">高清 3307×1876</a></figcaption>
+  </figure>
+  <figure>
+    <img src="refs/official_03_handmap.jpg" alt="手绘地图">
+    <figcaption>R3 手绘地图（命名与方位）<br><a href="docs/参考图核对页.html">完整核对页</a></figcaption>
+  </figure>
+</div>
+<p class="sub">
+高精度底图：<a href="refs/official_04_masterplan.pdf">R4 总体规划 PDF（A0 单页）</a> ·
+<a href="refs/official_05_pdf_embedded.jpg">R5 从 PDF 无损抽出的 6622×9361 原图</a> ·
+<a href="https://scenes.map.baidu.com/static/h5-project/fine-pano/fine-pano.html?fr=weixin&uid=5e6c6e787bc5a45debe582a3" target="_blank">百度地图 VR 全景（实景）</a>
+</p>
+
+<h2>三、布局元素清单</h2>
+<p class="sub">数据来自 <code>data/layout.csv</code>，改动后推送即由云端重新生成模型。</p>
+<table id="layoutTable">
+  <thead><tr><th>名称</th><th>类型</th><th>x</th><th>z</th><th>宽 w</th><th>深 d</th><th>高 h</th><th>备注</th></tr></thead>
+  <tbody><tr><td colspan="8">正在读取 data/layout.csv…</td></tr></tbody>
+</table>
+
+<h2>四、仓库内容</h2>
+<table>
+  <tr><th style="width:210px">路径</th><th>说明</th></tr>
+  <tr><td><code>refs/</code></td><td>公开参考图原件与官方总体规划 PDF</td></tr>
+  <tr><td><code>docs/参考图核对表.md</code></td><td>来源、尺寸、九项确认与默认取值</td></tr>
+  <tr><td><code>docs/建模规范.md</code></td><td>坐标系、CSV 字段、校准流程、精度分级</td></tr>
+  <tr><td><code>docs/参考图核对页.html</code></td><td>第一阶段核对页存档</td></tr>
+  <tr><td><code>data/layout.csv</code></td><td>布局元素与坐标（可编辑）</td></tr>
+  <tr><td><code>scripts/build_layout.py</code></td><td>纯标准库建模脚本，云端运行</td></tr>
+  <tr><td><code>.github/workflows/</code></td><td>云端建模 + Pages 部署</td></tr>
+  <tr><td><code>models/</code></td><td>云端生成的 GLB 与生成报告</td></tr>
+</table>
+
+<h2>五、合规声明</h2>
+<div class="note">
+仅使用学校官网及公开发布的宣传资料；未使用境外地图底图、卫星影像或测绘成果坐标。<br>
+如需地图底图，只用腾讯地图 / 高德 / 百度 / 天地图，且不内嵌 API 密钥。<br>
+成果为<b>教学展示用途 · 示意性布局 · 非测绘成果</b>，不作导航或工程依据；不标注涉密或敏感设施，不公开精确地理坐标。<br>
+图片版权归原发布方所有，本仓库仅作项目参考引用并标注来源。
+</div>
+
+<script>
+(function () {
+  var tbody = document.querySelector('#layoutTable tbody');
+  fetch('data/layout.csv').then(function (r) { return r.text(); }).then(function (text) {
+    var lines = text.trim().split(/\r?\n/).slice(1);
+    var html = lines.map(function (line) {
+      var c = line.split(',');
+      if (c.length < 8) return '';
+      return '<tr>' + c.slice(0, 8).map(function (v) {
+        return '<td>' + v.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    tbody.innerHTML = html || '<tr><td colspan="8">未读取到布局数据</td></tr>';
+  }).catch(function () {
+    tbody.innerHTML = '<tr><td colspan="8">本地打开时无法读取 CSV，请通过 GitHub Pages 查看，或直接打开 data/layout.csv</td></tr>';
+  });
+})();
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+const host = document.getElementById('viewer');
+function placeholder(msg) {
+  host.innerHTML = '<div style="padding:20px">模型待云端生成<br><span style="font-size:12px">' + msg + '</span></div>';
+}
+try {
+  const res = await fetch('models/campus_layout.glb', { method: 'HEAD' });
+  if (!res.ok) { placeholder('models/campus_layout.glb 尚不存在，推送后由 GitHub Actions 生成'); }
+  else {
+    const THREE = await import('three');
+    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf6f8fa);
+    const camera = new THREE.PerspectiveCamera(45, host.clientWidth / 420, 1, 5000);
+    camera.position.set(620, 700, 820);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(host.clientWidth, 420);
+    host.innerHTML = '';
+    host.appendChild(renderer.domElement);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+    sun.position.set(300, 700, 400);
+    scene.add(sun);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    new GLTFLoader().load('models/campus_layout.glb', function (gltf) {
+      scene.add(gltf.scene);
+      controls.update();
+    }, undefined, function () { placeholder('模型加载失败，请检查 GLB 文件'); });
+    (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+  }
+} catch (e) {
+  placeholder('在线 3D 组件未加载：' + (e && e.message ? e.message : '未知原因'));
+}
+</script>
+
+</body>
+</html>
