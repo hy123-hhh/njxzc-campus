@@ -1,0 +1,25 @@
+{
+  "source": "data/layout.csv",
+  "reference": "refs/official_01_plan.jpg（R1 彩色总平面规划图）",
+  "accuracy": "布局级示意，非测绘坐标",
+  "elements": 47,
+  "by_kind": {
+    "terrain": 1,
+    "plaza": 1,
+    "green": 4,
+    "building": 28,
+    "field": 3,
+    "water": 4,
+    "road": 6
+  },
+  "triangles": 574,
+  "x_range": [
+    -330.0,
+    330.0
+  ],
+  "z_range": [
+    -380.0,
+    380.0
+  ],
+  "glb_bytes": 60760
+}
