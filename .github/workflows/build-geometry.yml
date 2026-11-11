@@ -39,14 +39,17 @@ jobs:
       - name: Extract real outlines from official master plan
         run: python scripts/extract_outlines.py
 
-      - name: Extrude outlines to GLB and build offline preview
+      - name: Extrude outlines to GLB
         run: python scripts/build_geometry.py
+
+      - name: Apply procedural materials and lighting preview
+        run: python scripts/build_materials.py
 
       - name: Commit generated geometry
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/outlines.json data/extract_stats.json docs/outline_overlay.jpg docs/离线预览.html models/
+          git add data/outlines.json data/extract_stats.json docs/outline_overlay.jpg docs/离线预览.html docs/materials/ models/
           if git diff --staged --quiet; then
             echo "无变化，跳过提交"
           else

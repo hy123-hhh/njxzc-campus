@@ -1,0 +1,18 @@
+{
+  "stage": "材质与光影",
+  "source": "官方总平面图真实轮廓 + 程序化材质（按实拍配色）",
+  "polygons": 102,
+  "primitives": 110,
+  "triangles": 2582,
+  "textures": [
+    "roof",
+    "wall",
+    "glass",
+    "water",
+    "green",
+    "road"
+  ],
+  "glb_bytes": 537016,
+  "preview_bytes": 3232837,
+  "note": "材质为程序化近似，非逐栋照片贴图；需要每栋正面照才能进一步照片级还原"
+}
