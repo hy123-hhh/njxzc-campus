@@ -1,48 +1,67 @@
-﻿name,kind,x,z,w,d,h,color,note
-校园地形底板,terrain,0,0,700,900,0,#dce8cc,按R1用地范围示意
-中心合一广场,plaza,-70,-40,150,150,0.35,#e8dcc0,圆形广场按圆盘近似
-中心广场绿地,green,-70,-40,58,58,0.45,#7fae55,广场中心绿岛
-行知楼,building,-155,25,72,26,24,#c9c3b4,四大主楼弧形北一
-元培楼,building,-62,58,72,26,24,#c9c3b4,四大主楼弧形北二
-叔愚楼,building,32,62,72,26,24,#c9c3b4,四大主楼弧形北三
-鹤琴楼,building,122,38,72,26,24,#c9c3b4,四大主楼弧形北四
-中心报告厅,building,-70,115,60,40,16,#d3cbbb,四大主楼南侧
-图书馆,building,-235,-30,84,58,30,#b9c6d6,抹茶湖畔六层
-工科楼,building,-238,88,62,40,26,#c2cbd4,图书馆西侧
-崇一楼文科组团,building,-150,158,86,30,22,#c9c3b4,西门入口北侧
-行政办公楼,building,-45,-215,92,46,32,#cfc7bb,校园北部
-理科组团,building,145,-195,92,36,24,#c9c3b4,行政楼南侧
-综合科技楼,building,240,-150,56,46,28,#c2cbd4,东北教学组团
-国际交流中心,building,-195,-335,84,42,28,#cfc7bb,R1图例1
-北食堂,building,-140,-275,64,34,16,#d6cdbd,北部生活区
-南食堂,building,95,235,64,34,16,#d6cdbd,南部生活区
-大学生活动中心,building,65,225,72,40,22,#c9c3b4,R1图例11
-音乐楼,building,-252,245,62,40,20,#d8cfc0,西南艺术组团
-美术楼,building,-162,305,62,40,20,#d8cfc0,西南艺术组团
-风雨操场,building,-272,150,60,60,14,#d9d2c0,西南
-碟形体育馆,building,218,22,92,92,18,#dfe6ea,按圆柱近似
-综合体育馆,building,238,195,82,60,20,#c2cbd4,东南
-实训楼,building,250,290,60,38,22,#c9c3b4,东南
-A区宿舍滋兰苑,building,-240,-235,70,30,20,#d6cdbd,宿舍组团
-B区宿舍树蕙苑,building,-240,-180,70,30,20,#d6cdbd,宿舍组团
-C区宿舍春华苑,building,110,-270,70,30,20,#d6cdbd,宿舍组团
-D区宿舍秋实苑,building,110,-220,70,30,20,#d6cdbd,宿舍组团
-E区宿舍,building,-20,-330,70,30,20,#d6cdbd,北部宿舍
-F区宿舍,building,235,-255,70,30,20,#d6cdbd,东北宿舍
-G区宿舍,building,235,95,70,30,20,#d6cdbd,东侧宿舍
-北操场跑道,field,205,-330,150,100,0.25,#b56b52,R1红色跑道
-南操场,field,65,345,150,110,0.25,#a9c47c,南部绿色运动场
-篮球场组,field,-255,-140,90,60,0.25,#c8b9a0,北部球场
-抹茶湖北段,water,55,-260,58,175,0.12,#79b6d8,南北向水系
-抹茶湖中段,water,18,-70,66,150,0.12,#79b6d8,中心西侧水面
-抹茶湖南段,water,120,175,58,150,0.12,#79b6d8,南部水面
-东侧水系,water,255,55,42,250,0.12,#79b6d8,沿东侧斜向流出
-行知大道,road,0,0,18,880,0.18,#b9b9b2,南北主干道
-北部横向路,road,0,-290,660,14,0.18,#b9b9b2,横向主干道
-中部横向路,road,0,120,660,14,0.18,#b9b9b2,横向主干道
-南部横向路,road,0,280,660,14,0.18,#b9b9b2,横向主干道
-西侧外围道路,road,-330,0,14,880,0.18,#a9a9a2,弘景大道示意
-东侧外围道路,road,330,0,14,880,0.18,#a9a9a2,外围城市道路
-北部绿地,green,-190,-380,180,90,0.08,#8fb768,北侧绿化带
-西南绿地,green,-235,375,150,110,0.08,#8fb768,西南绿化带
-东南绿地,green,235,380,150,90,0.08,#8fb768,东南绿化带
+﻿name,kind,x,z,w,d,h,color,roof,floors,detail,note
+校园地形底板,terrain,0,0,700,900,0,#dce8cc,none,0,none,按R1用地范围示意
+中心合一广场,plaza,-70,-40,150,150,0.35,#e8dcc0,none,0,none,圆形广场按圆盘近似
+中心广场绿地,green,-70,-40,58,58,0.45,#7fa85a,none,0,none,广场中心绿岛
+行知楼,building,-155,25,72,26,24,#e7e9ea,hip,5,tower+arcade,四大主楼弧形北一
+元培楼,building,-62,58,72,26,24,#e7e9ea,hip,5,tower+arcade,四大主楼弧形北二
+叔愚楼,building,32,62,72,26,24,#e7e9ea,hip,5,tower+arcade,四大主楼弧形北三
+鹤琴楼,building,122,38,72,26,24,#e7e9ea,hip,5,tower+arcade,四大主楼弧形北四
+中心报告厅,building,-70,115,60,40,16,#dfe6ea,dome,2,steps,四大主楼南侧
+图书馆,building,-235,-30,84,58,30,#e2e5e7,flat,6,skylight,抹茶湖畔六层
+工科楼,building,-238,88,62,40,26,#d8e0e6,flat,6,glass,图书馆西侧
+崇一楼文科组团,building,-150,158,86,30,22,#e7e9ea,hip,5,none,西门入口北侧
+行政办公楼,building,-45,-215,92,46,32,#f0f1ee,hip,5,colonnade,校园北部
+理科组团,building,145,-195,92,36,24,#e7e9ea,hip,5,none,行政楼南侧
+综合科技楼,building,240,-150,56,46,28,#dde3e8,flat,6,none,东北教学组团
+国际交流中心,building,-195,-335,84,42,28,#dde3e8,flat,6,none,R1图例1
+北食堂,building,-140,-275,64,34,16,#e3ded3,flat,3,none,北部生活区
+南食堂,building,95,235,64,34,16,#e3ded3,flat,3,none,南部生活区
+大学生活动中心,building,65,225,72,40,22,#e7e9ea,hip,5,none,R1图例11
+音乐楼,building,-252,245,62,40,20,#deddd6,hip,4,none,西南艺术组团
+美术楼,building,-162,305,62,40,20,#deddd6,hip,4,none,西南艺术组团
+风雨操场,building,-272,150,60,60,14,#e7e9ea,gable,2,none,西南
+体育馆(人字坡顶),building,218,22,92,92,18,#dfe7ec,gable,3,glass,按圆柱近似
+体育馆(人字坡顶),building,238,195,82,60,20,#dfe7ec,gable,3,glass,东南
+实训楼,building,250,290,60,38,22,#dde3e8,flat,6,none,东南
+A区宿舍滋兰苑,building,-240,-235,70,30,20,#dedbd2,hip,6,none,宿舍组团
+B区宿舍树蕙苑,building,-240,-180,70,30,20,#dedbd2,hip,6,none,宿舍组团
+C区宿舍春华苑,building,110,-270,70,30,20,#dedbd2,hip,6,none,宿舍组团
+D区宿舍秋实苑,building,110,-220,70,30,20,#dedbd2,hip,6,none,宿舍组团
+E区宿舍,building,-20,-330,70,30,20,#dedbd2,hip,6,none,北部宿舍
+F区宿舍,building,235,-255,70,30,20,#dedbd2,hip,6,none,东北宿舍
+G区宿舍,building,235,95,70,30,20,#dedbd2,hip,6,none,东侧宿舍
+北操场跑道,field,205,-330,150,100,0.25,#b5544a,none,0,none,R1红色跑道
+南操场,field,65,345,150,110,0.25,#8fae6b,none,0,none,南部绿色运动场
+篮球场组,field,-255,-140,90,60,0.25,#8fae6b,none,0,none,北部球场
+抹茶湖北段,water,55,-260,58,175,0.12,#6fa8cf,none,0,none,南北向水系
+抹茶湖中段,water,18,-70,66,150,0.12,#6fa8cf,none,0,none,中心西侧水面
+抹茶湖南段,water,120,175,58,150,0.12,#6fa8cf,none,0,none,南部水面
+东侧水系,water,255,55,42,250,0.12,#6fa8cf,none,0,none,沿东侧斜向流出
+行知大道,road,0,0,18,880,0.18,#b9b9b2,none,0,none,南北主干道
+北部横向路,road,0,-290,660,14,0.18,#b9b9b2,none,0,none,横向主干道
+中部横向路,road,0,120,660,14,0.18,#b9b9b2,none,0,none,横向主干道
+南部横向路,road,0,280,660,14,0.18,#b9b9b2,none,0,none,横向主干道
+西侧外围道路,road,-330,0,14,880,0.18,#b9b9b2,none,0,none,弘景大道示意
+东侧外围道路,road,330,0,14,880,0.18,#b9b9b2,none,0,none,外围城市道路
+北部绿地,green,-190,-380,180,90,0.08,#7fa85a,none,0,none,北侧绿化带
+西南绿地,green,-235,375,150,110,0.08,#7fa85a,none,0,none,西南绿化带
+东南绿地,green,235,380,150,90,0.08,#7fa85a,none,0,none,东南绿化带
+陶行知立像,detail,-70,-40,4,4,13,#a9684f,none,0,statue,aerial_10 铜色立像
+陶像红色基座,detail,-70,-40,14,10,3,#9c4a3c,none,0,plinth,aerial_10 红基座金字
+陶像大台阶,detail,-70,-28,34,12,1.5,#d9d8d2,none,0,steps,aerial_10 多层台阶
+中心圆形花坛,detail,-70,-160,56,56,1.2,#8fae6b,none,0,roundbed,aerial_00 圆形花坛
+图书馆西侧塔楼,detail,-275,-30,18,18,38,#d9dde0,pavilion,0,tower,aerial_09 刻字塔楼
+图书馆东侧塔楼,detail,-195,-30,18,18,38,#b8cdd9,pavilion,0,tower,aerial_09 玻璃顶塔楼
+图书馆采光顶,detail,-235,-30,60,14,2,#9fc4d8,none,0,skylight,aerial_09 弧形采光带
+四大主楼连廊,detail,-20,88,320,8,9,#e2e4e5,flat,0,bridge,aerial_01 横向连廊
+湖心亭,detail,12,-95,16,16,9,#8c6d55,pavilion,0,pavilion,aerial_15 中式攒尖顶亭
+湖上石桥,detail,70,-20,60,8,2,#cfc9bb,none,0,bridge,搜狐拼图 桥
+西门银杏树列,detail,-285,0,10,620,10,#d9a441,none,0,treeline,aerial_07 金黄银杏列
+樱花大道树列,detail,175,0,10,540,9,#e3b7c4,none,0,treeline,VR全景 樱花大道
+中轴红色花带西,detail,-175,-40,10,220,0.6,#c04b40,none,0,flowerbed,aerial_00 红色花带
+中轴红色花带东,detail,35,-40,10,220,0.6,#c04b40,none,0,flowerbed,aerial_00 红色花带
+行政楼白色柱廊,detail,-45,-215,100,8,12,#f2f3f0,none,0,colonnade,aerial_07 白柱长廊
+西门假山石景,detail,-285,-150,46,26,4,#b9b5a9,none,0,rockery,aerial_07 假山石
+北操场跑道环,detail,205,-330,150,100,0.3,#b5544a,none,0,track,aerial_14 跑道
+南操场跑道环,detail,65,345,150,110,0.3,#b5544a,none,0,track,aerial_14 跑道
+校名石,detail,-320,140,22,8,5,#a9a49a,none,0,monument,校友网 校名石

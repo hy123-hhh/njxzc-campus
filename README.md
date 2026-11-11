@@ -49,6 +49,19 @@ index.html            GitHub Pages 在线预览首页
 - 布局元素清单（读 `data/layout.csv`）
 - 状态与合规说明
 
+## v2：按实拍照片优化（2026-11-11）
+
+`refs/places/` 收录 28 张公开实拍图，`data/place_refs.csv` 记录「图片 → 地标 → 观察到的外观特征 → 对应建模元素 → 来源」的对应关系。据图修正：
+
+- 整体配色由米黄盒子改为**白灰墙 + 深蓝灰坡屋顶 + 蓝色玻璃窗带**
+- 四大主楼：四坡顶、端头中式塔楼、横向连廊，围合中轴
+- 中心报告厅：圆形玻璃穹顶 + 台阶
+- 图书馆：左右双塔楼（刻字塔 / 玻璃顶塔）+ 中央采光顶 + 六层横窗
+- 体育馆：人字大坡顶 + 玻璃幕墙（原为圆柱碟形，与实拍不符）
+- 新增场景细节：陶像红基座与大台阶、圆形花坛、湖心亭、银杏/樱花树列、红色花带、跑道环、假山、校名石
+
+`data/layout.csv` 新增 `roof / floors / detail` 三列；`scripts/build_layout.py` 支持 hip / gable / dome / pavilion 屋顶及 14 类细节构件。`docs/离线预览.html` 为自包含单文件（内嵌实拍与全部数据），不依赖任何网络即可查看。
+
 ## 云端建模
 
 推送 `data/layout.csv` 或 `scripts/build_layout.py` 会自动触发 `.github/workflows/build-model.yml`：
