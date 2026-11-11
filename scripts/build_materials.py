@@ -488,9 +488,11 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <div class="pane"><h3>云端描边验收</h3><img src="data:image/jpeg;base64,__OVERLAY__" alt="描边验收"></div>
 <div class="pane"><h3>四大主楼实拍（配色依据）</h3><img src="data:image/jpeg;base64,__AERIAL__" alt="实拍"></div>
 </div>
-<h2>三维预览（地面 = 真实规划图）</h2>
+<h2>校园地图与三维预览</h2>
+<div class="ctl"><button onclick="setView(2)">俯视地图</button> <button onclick="setView(3)">三维预览</button>
+<span id="hint">默认俯视图：真实规划图 + 楼栋填色 + 中文标注 + 100m 比例尺</span></div>
 <canvas id="cv" width="1000" height="600"></canvas>
-<div class="ctl">左右拖动旋转，上下平移，滚轮缩放　<button onclick="resetView()">重置视角</button>
+<div class="ctl" id="ctl3d" style="display:none">左右拖动旋转，上下平移，滚轮缩放　<button onclick="resetView()">重置视角</button>
 <label><input type="checkbox" id="ground" checked onchange="draw()"> 规划图地面</label>
 <label><input type="checkbox" id="label" checked onchange="draw()"> 标注</label>
 <label><input type="checkbox" id="tree" checked onchange="draw()"> 树木</label></div>
@@ -503,7 +505,7 @@ const GROUND=document.getElementById('planimg').src.split(',')[1];
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const GIMG=new Image();GIMG.onload=draw;GIMG.src='data:image/jpeg;base64,'+GROUND;
 const BASE={building:'#e7e9ea',roof:'#3c4a63',water:'#6fa8cf',green:'#7fa85a',road:'#c9c8c0'};
-let ang=-.62,sc=__INITSC__,panX=0,panY=140,drag=false,lx=0,ly=0;
+let ang=-.62,sc=__INITSC__,panX=0,panY=140,drag=false,lx=0,ly=0,view=2;
 function sh(h,f){const s=h.replace('#','');return 'rgb('+[0,2,4].map(i=>Math.min(255,parseInt(s.slice(i,i+2),16)*f|0)).join(',')+')';}
 function proj(x,y,z){const c=Math.cos(ang),s=Math.sin(ang),rx=x*c-z*s,rz=x*s+z*c;
 return [cv.width/2+(rx-rz)*.866*sc+panX,cv.height/2+(rx+rz)*.5*sc-y*sc*.9+panY];}
@@ -541,7 +543,7 @@ LABELS.forEach(L=>{const q=proj(L.x,8,L.z);const tw=ctx.measureText(L.n).width;
 ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(q[0]-tw/2-5,q[1]-16,tw+10,18);
 ctx.strokeStyle='rgba(31,111,235,.65)';ctx.lineWidth=1;ctx.strokeRect(q[0]-tw/2-5,q[1]-16,tw+10,18);
 ctx.fillStyle='#1f2328';ctx.fillText(L.n,q[0],q[1]-3);});}
-function draw(){fillBg();if(document.getElementById('ground').checked)drawGround();const trees=document.getElementById('tree').checked;
+function draw3D(){fillBg();if(document.getElementById('ground').checked)drawGround();const trees=document.getElementById('tree').checked;
 const order=DATA.slice().sort((a,b)=>{const ca=a.p.reduce((s,p)=>s+p[0]+p[1],0)/a.p.length,cb=b.p.reduce((s,p)=>s+p[0]+p[1],0)/b.p.length;return ca-cb;});
 order.forEach(r=>{const p=r.p;if(p.length<3)return;
 if(r.c!=='building'){const y=r.c==='water'?.14:(r.c==='green'?.1:.2);
@@ -564,7 +566,25 @@ poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(BASE.roof,1.15));
 DETAILS.forEach(d=>drawDetail(d));
 drawLabels();
 }
+function draw2D(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#eef3f7';ctx.fillRect(0,0,cv.width,cv.height);
+const scm=(cv.width*0.9)/994.5,ox=cv.width/2,oy=cv.height/2;
+const W=994.5*scm,Hh=1322.1*scm;
+if(GIMG.complete&&GIMG.naturalWidth){ctx.drawImage(GIMG,ox-497.24*scm,oy-661.05*scm,W,Hh);}
+const S=(x,z)=>[ox+x*scm,oy+z*scm];
+DATA.forEach(r=>{const p=r.p;if(p.length<3)return;ctx.beginPath();
+p.forEach((q,i)=>{const s=S(q[0],q[1]);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1]);});ctx.closePath();
+const c={building:'rgba(72,92,122,.32)',water:'rgba(70,140,200,.55)',green:'rgba(96,164,96,.45)',road:'rgba(150,150,150,.35)'}[r.c];
+ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=r.c==='building'?'rgba(40,60,90,.75)':'rgba(30,90,140,.75)';ctx.lineWidth=1;ctx.stroke();});
+ctx.font='600 15px "Microsoft YaHei",sans-serif';ctx.textAlign='center';
+LABELS.forEach(L=>{const s=S(L.x,L.z);const tw=ctx.measureText(L.n).width;
+ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(s[0]-tw/2-6,s[1]-18,tw+12,20);
+ctx.strokeStyle='rgba(31,111,235,.7)';ctx.lineWidth=1;ctx.strokeRect(s[0]-tw/2-6,s[1]-18,tw+12,20);
+ctx.fillStyle='#1f2328';ctx.fillText(L.n,s[0],s[1]-3);});
+const bl=100*scm;ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(20,cv.height-26);ctx.lineTo(20+bl,cv.height-26);ctx.stroke();
+ctx.fillStyle='#333';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.fillText('100 m',20,cv.height-32);}
+function draw(){if(view===2)draw2D();else draw3D();}
 function resetView(){ang=-.62;sc=__INITSC__;panX=0;panY=140;draw();}
+function setView(v){view=v;document.getElementById('ctl3d').style.display=v===3?'block':'none';draw();}
 cv.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.style.cursor='grabbing';});
 window.addEventListener('mouseup',()=>{drag=false;cv.style.cursor='grab';});
 window.addEventListener('mousemove',e=>{if(!drag)return;ang+=(e.clientX-lx)*.008;panY+=(e.clientY-ly)*.5;lx=e.clientX;ly=e.clientY;draw();});
