@@ -1,0 +1,67 @@
+name: build-campus-geometry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/extract_outlines.py'
+      - 'scripts/build_geometry.py'
+      - '.github/workflows/build-geometry.yml'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install image dependencies
+        run: pip install --quiet numpy opencv-python-headless shapely
+
+      - name: Extract real outlines from official master plan
+        run: python scripts/extract_outlines.py
+
+      - name: Extrude outlines to GLB and build offline preview
+        run: python scripts/build_geometry.py
+
+      - name: Commit generated geometry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/outlines.json data/extract_stats.json docs/outline_overlay.jpg docs/离线预览.html models/
+          if git diff --staged --quiet; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "feat: 按官方总平面图逐像素提取真实轮廓并挤出三维模型 [skip ci]"
+            git push
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

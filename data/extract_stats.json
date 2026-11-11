@@ -1,0 +1,38 @@
+{
+  "source": "refs/official_01_plan_d.jpg",
+  "image": [
+    4604,
+    6123
+  ],
+  "work": [
+    1800,
+    2393
+  ],
+  "classes": {
+    "building": {
+      "raw_pixels": 1113646,
+      "contours_found": 646,
+      "kept": 15,
+      "total_area_px": 2351369.5
+    },
+    "water": {
+      "raw_pixels": 170606,
+      "contours_found": 16,
+      "kept": 9,
+      "total_area_px": 86472.5
+    },
+    "green": {
+      "raw_pixels": 882260,
+      "contours_found": 944,
+      "kept": 49,
+      "total_area_px": 323612.5
+    },
+    "road": {
+      "raw_pixels": 1703726,
+      "contours_found": 255,
+      "kept": 29,
+      "total_area_px": 1742054.0
+    }
+  },
+  "polygons_total": 102
+}
