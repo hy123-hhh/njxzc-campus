@@ -305,7 +305,7 @@ const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const PAT={};
 Object.keys(TEX).forEach(k=>{const im=new Image();im.onload=()=>{PAT[k]=ctx.createPattern(im,'repeat');draw();};im.src='data:image/png;base64,'+TEX[k];});
 const BASE={building:'#e7e9ea',water:'#6fa8cf',green:'#7fa85a',road:'#c9c8c0',roof:'#3c4a63'};
-let ang=-.62,sc=.48,panX=0,panY=120,drag=false,lx=0,ly=0;
+let ang=-.62,sc=__INITSC__,panX=0,panY=120,drag=false,lx=0,ly=0;
 function sh(h,f){const s=h.replace('#','');return 'rgb('+[0,2,4].map(i=>Math.min(255,parseInt(s.slice(i,i+2),16)*f|0)).join(',')+')';}
 function proj(x,y,z){const c=Math.cos(ang),s=Math.sin(ang),rx=x*c-z*s,rz=x*s+z*c;
 return [cv.width/2+(rx-rz)*.866*sc+panX,cv.height/2+(rx+rz)*.5*sc-y*sc*.9+panY];}
@@ -338,15 +338,20 @@ for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length],c=ip[i],d=ip[(i+1)%
 poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(BASE.roof,.82+.2*((i%3)/3)),'roof');}
 poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(BASE.roof,1.15),'roof');
 });}
-function resetView(){ang=-.62;sc=.48;panX=0;panY=120;draw();}
+function resetView(){ang=-.62;sc=__INITSC__;panX=0;panY=120;draw();}
 cv.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.style.cursor='grabbing';});
 window.addEventListener('mouseup',()=>{drag=false;cv.style.cursor='grab';});
 window.addEventListener('mousemove',e=>{if(!drag)return;ang+=(e.clientX-lx)*.008;panY+=(e.clientY-ly)*.5;lx=e.clientX;ly=e.clientY;draw();});
 cv.addEventListener('wheel',e=>{e.preventDefault();sc*=e.deltaY>0?.9:1.1;draw();},{passive:false});
 draw();</script></body></html>'''
     tex_js = ",".join("'%s':'%s'" % (k, v) for k, v in tex_b64.items())
+    all_pts = [q for p in polys for q in p["points"]]
+    span = max(max(q[0] for q in all_pts) - min(q[0] for q in all_pts),
+               max(q[1] for q in all_pts) - min(q[1] for q in all_pts), 1.0)
+    init_sc = round(336.0 / span, 5)
     html = (html.replace("__PLAN__", imgs["plan"]).replace("__OVERLAY__", imgs["overlay"])
                 .replace("__AERIAL__", imgs["aerial"]).replace("__COUNT__", str(len(polys)))
+                .replace("__INITSC__", str(init_sc))
                 .replace("__TEX__", tex_js).replace("__DATA__", json.dumps(data, ensure_ascii=False)))
     open(PREVIEW, "w", encoding="utf-8", newline="\n").write(html)
     return len(html.encode("utf-8"))

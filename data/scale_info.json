@@ -1,0 +1,13 @@
+{
+  "line_px": 181,
+  "assumed_meters": 100.0,
+  "px_per_m": 1.81,
+  "campus_width_m": 994.5,
+  "campus_height_m": 1322.1,
+  "roi_px": [
+    0,
+    1866,
+    612,
+    2393
+  ]
+}

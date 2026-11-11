@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/extract_outlines.py'
+      - 'scripts/refine_geometry.py'
       - 'scripts/build_geometry.py'
       - '.github/workflows/build-geometry.yml'
 
@@ -39,6 +40,9 @@ jobs:
       - name: Extract real outlines from official master plan
         run: python scripts/extract_outlines.py
 
+      - name: Split buildings and calibrate scale from plan ruler
+        run: python scripts/refine_geometry.py
+
       - name: Extrude outlines to GLB
         run: python scripts/build_geometry.py
 
@@ -49,7 +53,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/outlines.json data/extract_stats.json docs/outline_overlay.jpg docs/离线预览.html docs/materials/ models/
+          git add data/outlines.json data/extract_stats.json data/scale_info.json data/refine_report.json docs/outline_overlay.jpg docs/scale_crop.png docs/离线预览.html docs/materials/ models/
           if git diff --staged --quiet; then
             echo "无变化，跳过提交"
           else
