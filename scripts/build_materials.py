@@ -573,15 +573,22 @@ if(GIMG.complete&&GIMG.naturalWidth){ctx.drawImage(GIMG,ox-497.24*scm,oy-661.05*
 const S=(x,z)=>[ox+x*scm,oy+z*scm];
 DATA.forEach(r=>{const p=r.p;if(p.length<3)return;ctx.beginPath();
 p.forEach((q,i)=>{const s=S(q[0],q[1]);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1]);});ctx.closePath();
-const c={building:'rgba(72,92,122,.32)',water:'rgba(70,140,200,.55)',green:'rgba(96,164,96,.45)',road:'rgba(150,150,150,.35)'}[r.c];
-ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=r.c==='building'?'rgba(40,60,90,.75)':'rgba(30,90,140,.75)';ctx.lineWidth=1;ctx.stroke();});
+const c={building:'rgba(70,90,120,.16)',water:'rgba(70,140,200,.38)',green:'rgba(96,164,96,.26)',road:'rgba(150,150,150,.14)'}[r.c];
+ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=r.c==='building'?'rgba(40,60,90,.7)':'rgba(30,90,140,.7)';ctx.lineWidth=1;ctx.stroke();});
 ctx.font='600 15px "Microsoft YaHei",sans-serif';ctx.textAlign='center';
 LABELS.forEach(L=>{const s=S(L.x,L.z);const tw=ctx.measureText(L.n).width;
 ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(s[0]-tw/2-6,s[1]-18,tw+12,20);
 ctx.strokeStyle='rgba(31,111,235,.7)';ctx.lineWidth=1;ctx.strokeRect(s[0]-tw/2-6,s[1]-18,tw+12,20);
 ctx.fillStyle='#1f2328';ctx.fillText(L.n,s[0],s[1]-3);});
 const bl=100*scm;ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(20,cv.height-26);ctx.lineTo(20+bl,cv.height-26);ctx.stroke();
-ctx.fillStyle='#333';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.fillText('100 m',20,cv.height-32);}
+ctx.fillStyle='#333';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.fillText('100 m',20,cv.height-32);
+ctx.textAlign='left';ctx.fillStyle='#1f2328';ctx.font='700 18px "Microsoft YaHei",sans-serif';
+ctx.fillText('南京晓庄学院（方山校区）· 俯视总平面',18,26);
+ctx.font='12px "Microsoft YaHei",sans-serif';ctx.fillStyle='#57606a';ctx.fillText('真实规划图 + 楼栋/水体/绿地轮廓（示意）',18,44);
+const nx=cv.width-34,ny=34;ctx.strokeStyle='#333';ctx.fillStyle='#333';ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(nx,ny+14);ctx.lineTo(nx,ny-10);ctx.stroke();
+ctx.beginPath();ctx.moveTo(nx-5,ny-3);ctx.lineTo(nx,ny-12);ctx.lineTo(nx+5,ny-3);ctx.closePath();ctx.fill();
+ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('N',nx,ny+26);}
 function draw(){if(view===2)draw2D();else draw3D();}
 function resetView(){ang=-.62;sc=__INITSC__;panX=0;panY=140;draw();}
 function setView(v){view=v;document.getElementById('ctl3d').style.display=v===3?'block':'none';draw();}
