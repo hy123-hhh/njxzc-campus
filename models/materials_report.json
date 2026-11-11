@@ -1,9 +1,10 @@
 {
-  "stage": "材质与光影",
+  "stage": "材质与光影 + 场景细节回填 + 层数分档",
   "source": "官方总平面图真实轮廓 + 程序化材质（按实拍配色）",
   "polygons": 173,
-  "primitives": 241,
-  "triangles": 6893,
+  "scene_details": 16,
+  "primitives": 271,
+  "triangles": 7593,
   "textures": [
     "roof",
     "wall",
@@ -12,7 +13,7 @@
     "green",
     "road"
   ],
-  "glb_bytes": 965600,
-  "preview_bytes": 3208471,
-  "note": "材质为程序化近似，非逐栋照片贴图；需要每栋正面照才能进一步照片级还原"
+  "glb_bytes": 1047048,
+  "preview_bytes": 3211636,
+  "note": "材质为程序化近似，非逐栋照片贴图；建筑高度按公开资料常见层数分档（11/15/18/21m）"
 }

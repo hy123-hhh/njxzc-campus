@@ -90,6 +90,122 @@ def make_textures():
     return {k: cv2.imencode(".png", v)[1].tobytes() for k, v in out.items()}
 
 
+def compute_details(polys):
+    """按官方总平面图的真实位置回填场景细节（新米制坐标）。"""
+    d = []
+
+    def add(t, x, z, w, dd, h, c, n):
+        d.append({"t": t, "x": x, "z": z, "w": w, "d": dd, "h": h, "c": c, "n": n})
+
+    add("plinth", -60, -30, 16, 12, 3, "#9c4a3c", "陶像红基座")
+    add("statue", -60, -30, 5, 5, 13, "#a9684f", "陶行知立像")
+    add("steps", -60, -14, 40, 14, 2, "#d9d8d2", "合一广场大台阶")
+    add("roundbed", -60, -170, 60, 60, 1.5, "#8fae6b", "中心圆形花坛")
+    waters = sorted([p for p in polys if p["class"] == "water"],
+                    key=lambda p: -p.get("area_px", 0))
+    if waters:
+        c = waters[0]["centroid"]
+        add("pavilion", c[0], c[1], 18, 18, 10, "#8c6d55", "湖心亭")
+    bs = sorted([p for p in polys if p["class"] == "building"],
+                key=lambda p: -p.get("area_px", 0))
+    if bs:
+        c = bs[0]["centroid"]
+        add("tower", c[0] - 52, c[1], 18, 18, 40, "#d9dde0", "图书馆西塔")
+        add("tower", c[0] + 52, c[1], 18, 18, 40, "#b8cdd9", "图书馆东塔")
+    add("treeline", -400, 0, 10, 900, 11, "#d9a441", "西门银杏树列")
+    add("treeline", 230, 60, 10, 700, 10, "#e3b7c4", "樱花大道树列")
+    add("flowerbed", -200, -30, 12, 260, 0.8, "#c04b40", "中轴红色花带西")
+    add("flowerbed", 80, -30, 12, 260, 0.8, "#c04b40", "中轴红色花带东")
+    add("track", 300, -380, 190, 130, 0.4, "#b5544a", "北操场跑道环")
+    add("track", 100, 430, 190, 140, 0.4, "#b5544a", "南操场跑道环")
+    add("rockery", -400, -200, 50, 30, 5, "#b9b5a9", "西门假山")
+    add("monument", -430, 180, 24, 9, 6, "#a9a49a", "校名石")
+    add("bridge", 100, -20, 70, 9, 2, "#cfc9bb", "湖上石桥")
+    return d
+
+
+def detail_geometry(item):
+    """把场景细节转成带 UV 的网格片段，返回 [(TMesh, material_key)]。"""
+    t, x, z = item["t"], item["x"], item["z"]
+    w, dd, h, col = item["w"], item["d"], item["h"], item["c"]
+    key = "solid_" + col.lstrip("#")
+    out = []
+
+    def box_mesh(cx, cz, ww, dz, hh, base=0.0):
+        m = TMesh()
+        x0, x1, z0, z1 = cx - ww / 2, cx + ww / 2, cz - dz / 2, cz + dz / 2
+        y0, y1 = base, base + hh
+        m.quad([(x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1)],
+               (0, 1, 0), [(0, 0), (ww / 14, 0), (ww / 14, dz / 14), (0, dz / 14)])
+        m.quad([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)],
+               (0, 0, 1), [(0, 0), (ww / 14, 0), (ww / 14, hh / 14), (0, hh / 14)])
+        m.quad([(x1, y0, z0), (x1, y0, z1), (x1, y1, z1), (x1, y1, z0)],
+               (1, 0, 0), [(0, 0), (dz / 14, 0), (dz / 14, hh / 14), (0, hh / 14)])
+        m.quad([(x0, y0, z0), (x0, y0, z1), (x0, y1, z1), (x0, y1, z0)],
+               (-1, 0, 0), [(0, 0), (dz / 14, 0), (dz / 14, hh / 14), (0, hh / 14)])
+        return m
+
+    def cyl_mesh(cx, cz, r, hh, base=0.0, seg=12):
+        m = TMesh()
+        for i in range(seg):
+            a, b = 2 * math.pi * i / seg, 2 * math.pi * (i + 1) / seg
+            p0, p1 = (cx + r * math.cos(a), cz + r * math.sin(a)), (cx + r * math.cos(b), cz + r * math.sin(b))
+            m.quad([(p0[0], base, p0[1]), (p1[0], base, p1[1]),
+                    (p1[0], base + hh, p1[1]), (p0[0], base + hh, p0[1])],
+                   (0, 0, 1), [(0, 0), (1, 0), (1, 1), (0, 1)])
+            m.tri([(cx, base + hh, cz), (p0[0], base + hh, p0[1]), (p1[0], base + hh, p1[1])],
+                  (0, 1, 0), [(.5, .5), (0, 0), (1, 0)])
+        return m
+
+    def cone_mesh(cx, cz, r, hh, base, seg=10):
+        m = TMesh()
+        for i in range(seg):
+            a, b = 2 * math.pi * i / seg, 2 * math.pi * (i + 1) / seg
+            m.tri([(cx, base + hh, cz),
+                   (cx + r * math.cos(a), base, cz + r * math.sin(a)),
+                   (cx + r * math.cos(b), base, cz + r * math.sin(b))],
+                  (0, 1, 0), [(.5, 1), (0, 0), (1, 0)])
+        return m
+
+    if t == "statue":
+        out.append((cyl_mesh(x, z, w * .28, h * .72), key))
+        out.append((cyl_mesh(x, z, w * .16, h * .18, h * .72), key))
+    elif t == "roundbed":
+        out.append((cyl_mesh(x, z, min(w, dd) / 2, h, 0, 20), key))
+    elif t == "pavilion":
+        out.append((cyl_mesh(x, z, min(w, dd) / 2, h * .62, 0, 12), "solid_d8d3c6"))
+        out.append((cone_mesh(x, z, min(w, dd) * .72, h * .48, h * .62), "solid_3c4a63"))
+    elif t == "tower":
+        out.append((box_mesh(x, z, w, dd, h), key))
+        out.append((cone_mesh(x, z, min(w, dd) * .75, h * .28, h), "solid_3c4a63"))
+    elif t == "treeline":
+        n = max(6, int(dd / 45))
+        trunk = TMesh()
+        crown = TMesh()
+        for i in range(n):
+            zz = z - dd / 2 + dd * (i + .5) / n
+            trunk.quad([(x - 1, 0, zz), (x + 1, 0, zz), (x + 1, h * .5, zz), (x - 1, h * .5, zz)],
+                       (0, 0, 1), [(0, 0), (1, 0), (1, 1), (0, 1)])
+            for j in range(8):
+                a, b = 2 * math.pi * j / 8, 2 * math.pi * (j + 1) / 8
+                crown.tri([(x, h, zz),
+                           (x + 5 * math.cos(a), h * .45, zz + 5 * math.sin(a)),
+                           (x + 5 * math.cos(b), h * .45, zz + 5 * math.sin(b))],
+                          (0, 1, 0), [(.5, 1), (0, 0), (1, 0)])
+        out.append((trunk, "solid_8a7256"))
+        out.append((crown, key))
+    elif t == "track":
+        for cx, cz, ww, dz in ((x, z - dd / 2, w, 5), (x, z + dd / 2, w, 5),
+                               (x - w / 2, z, 5, dd), (x + w / 2, z, 5, dd)):
+            out.append((box_mesh(cx, cz, ww, dz, h), key))
+    elif t == "steps":
+        for i in range(3):
+            out.append((box_mesh(x, z + i * dd * .08, w * (1 - i * .12), dd * (1 - i * .12), h * (i + 1) / 3), key))
+    else:
+        out.append((box_mesh(x, z, w, dd, h), key))
+    return out
+
+
 class TMesh:
     def __init__(self):
         self.pos, self.nrm, self.uv, self.idx = [], [], [], []
@@ -127,7 +243,18 @@ def tris_of(points):
         return []
 
 
-def build_parts(polys):
+def building_height(area):
+    """按公开资料中的常见层数分档（层高约 3.3m），替代纯面积公式。"""
+    if area > 9000:
+        return 21.0
+    if area > 3500:
+        return 18.0
+    if area > 1200:
+        return 15.0
+    return 11.0
+
+
+def build_parts(polys, details=None):
     parts = []
     for p in polys:
         cls, pts = p["class"], p["points"]
@@ -145,7 +272,7 @@ def build_parts(polys):
             parts.append((m, cls))
             continue
         area = abs(Polygon(pts).area)
-        h = min(34.0, max(12.0, 11.0 + math.sqrt(max(area, 1)) * 0.34))
+        h = building_height(area)
         body = TMesh()
         for t in tris:
             body.tri([(a, h, b) for a, b in t], (0, 1, 0),
@@ -181,6 +308,8 @@ def build_parts(polys):
             pass
         if roof.pos:
             parts.append((roof, "roof"))
+    for item in (details or []):
+        parts.extend(detail_geometry(item))
     return parts
 
 
@@ -211,14 +340,21 @@ def build_glb(parts, textures):
         if not mesh.pos:
             continue
         if key not in mat_index:
-            r, g, b = [c / 255.0 for c in TEX.get(key, (200, 200, 200))[::-1]]
             mat_index[key] = len(mats)
-            mats.append({"name": key, "doubleSided": True,
-                         "pbrMetallicRoughness": {
-                             "baseColorTexture": {"index": list(textures).index(key)},
-                             "baseColorFactor": [1, 1, 1, 1],
-                             "metallicFactor": 0.05 if key != "water" else 0.25,
-                             "roughnessFactor": 0.45 if key in ("water", "glass") else 0.85}})
+            if key.startswith("solid_"):
+                hx = key[6:]
+                rgb = [int(hx[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
+                mats.append({"name": key, "doubleSided": True,
+                             "pbrMetallicRoughness": {"baseColorFactor": rgb + [1.0],
+                                                      "metallicFactor": 0.0,
+                                                      "roughnessFactor": 0.9}})
+            else:
+                mats.append({"name": key, "doubleSided": True,
+                             "pbrMetallicRoughness": {
+                                 "baseColorTexture": {"index": list(textures).index(key)},
+                                 "baseColorFactor": [1, 1, 1, 1],
+                                 "metallicFactor": 0.05 if key != "water" else 0.25,
+                                 "roughnessFactor": 0.45 if key in ("water", "glass") else 0.85}})
         fp = [c for p in mesh.pos for c in p]
         fn = [c for n in mesh.nrm for c in n]
         fu = [c for u in mesh.uv for c in u]
@@ -264,8 +400,10 @@ def b64(path):
     return base64.b64encode(open(path, "rb").read()).decode()
 
 
-def make_preview(polys, textures):
+def make_preview(polys, details, textures):
     data = [{"c": p["class"], "p": p["points"]} for p in polys]
+    det = [{"t": d["t"], "x": d["x"], "z": d["z"], "w": d["w"],
+            "d": d["d"], "h": d["h"], "c": d["c"], "n": d["n"]} for d in details]
     tex_b64 = {k: base64.b64encode(v).decode() for k, v in textures.items()}
     imgs = {"plan": b64(os.path.join(ROOT, "refs", "official_01_plan.jpg")),
             "overlay": b64(os.path.join(ROOT, "docs", "outline_overlay.jpg")),
@@ -300,6 +438,7 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <div class="note">共 __COUNT__ 个真实轮廓。来源：学校发展规划处公开总平面规划图；实拍来自公开媒体转载，版权归原发布方。教学展示用途 · 示意性布局 · 非测绘成果。</div>
 <script>
 const DATA=__DATA__;
+const DETAILS=__DETAILS__;
 const TEX={__TEX__};
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const PAT={};
@@ -316,7 +455,25 @@ if(mode&&texOn&&PAT[mode]){ctx.save();ctx.fillStyle=PAT[mode];ctx.globalAlpha=1;
 else{ctx.fillStyle=fill;ctx.fill();}
 ctx.strokeStyle='rgba(35,45,60,.30)';ctx.lineWidth=.5;ctx.stroke();}
 function area(p){let a=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return Math.abs(a)/2;}
-function height(a){return Math.min(34,Math.max(12,11+Math.sqrt(Math.max(a,1))*.34));}
+function height(a){return a>9000?21:(a>3500?18:(a>1200?15:11));}
+function drawDetail(d){
+if(d.t==='treeline'){const n=Math.max(6,Math.floor(d.d/45));
+for(let i=0;i<n;i++){const zz=d.z-d.d/2+d.d*(i+.5)/n,q=proj(d.x,d.h*.62,zz);
+ctx.beginPath();ctx.arc(q[0],q[1],4.6,0,7);ctx.fillStyle=d.c;ctx.fill();
+ctx.beginPath();ctx.arc(q[0],q[1]+5,1.8,0,7);ctx.fillStyle='#8a7256';ctx.fill();}return;}
+if(d.t==='track'){const x0=d.x-d.w/2,x1=d.x+d.w/2,z0=d.z-d.d/2,z1=d.z+d.d/2;
+ctx.beginPath();[[x0,.3,z0],[x1,.3,z0],[x1,.3,z1],[x0,.3,z1],[x0,.3,z0]].forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
+ctx.strokeStyle=d.c;ctx.lineWidth=3;ctx.stroke();return;}
+if(d.t==='statue'||d.t==='roundbed'||d.t==='pavilion'||d.t==='tower'){
+const r=Math.min(d.w,d.d)/2,q0=proj(d.x,0,d.z),q1=proj(d.x,d.h,d.z),w=r*sc;
+ctx.beginPath();ctx.moveTo(q0[0]-w,q0[1]);ctx.lineTo(q0[0]+w,q0[1]);ctx.lineTo(q1[0]+w,q1[1]);ctx.lineTo(q1[0]-w,q1[1]);ctx.closePath();
+ctx.fillStyle=d.c;ctx.fill();ctx.strokeStyle='rgba(40,50,60,.35)';ctx.lineWidth=.6;ctx.stroke();
+if(d.t==='pavilion'||d.t==='tower'){const t=proj(d.x,d.h+d.h*.42,d.z);
+ctx.beginPath();ctx.moveTo(q1[0]-w*1.5,q1[1]);ctx.lineTo(t[0],t[1]);ctx.lineTo(q1[0]+w*1.5,q1[1]);ctx.closePath();ctx.fillStyle='#3c4a63';ctx.fill();}return;}
+const x0=d.x-d.w/2,x1=d.x+d.w/2,z0=d.z-d.d/2,z1=d.z+d.d/2;
+poly3([[x0,0,z0],[x1,0,z0],[x1,d.h,z0],[x0,d.h,z0]],d.c);
+poly3([[x0,d.h,z0],[x1,d.h,z0],[x1,d.h,z1],[x0,d.h,z1]],d.c);
+}
 function fillBg(){const g=ctx.createLinearGradient(0,0,0,cv.height);g.addColorStop(0,'#dfeaf5');g.addColorStop(.55,'#eef3f7');g.addColorStop(1,'#e7eddf');ctx.fillStyle=g;ctx.fillRect(0,0,cv.width,cv.height);}
 function draw(){fillBg();const shadow=document.getElementById('shadow').checked,trees=document.getElementById('tree').checked;
 const order=DATA.slice().sort((a,b)=>{const ca=a.p.reduce((s,p)=>s+p[0]+p[1],0)/a.p.length,cb=b.p.reduce((s,p)=>s+p[0]+p[1],0)/b.p.length;return ca-cb;});
@@ -337,7 +494,9 @@ const k=.12,rise=Math.min(6,Math.max(2.5,h*.18)),ip=p.map(q=>[cx+(q[0]-cx)*(1-k)
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length],c=ip[i],d=ip[(i+1)%ip.length];
 poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(BASE.roof,.82+.2*((i%3)/3)),'roof');}
 poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(BASE.roof,1.15),'roof');
-});}
+});
+DETAILS.forEach(d=>drawDetail(d));
+}
 function resetView(){ang=-.62;sc=__INITSC__;panX=0;panY=120;draw();}
 cv.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.style.cursor='grabbing';});
 window.addEventListener('mouseup',()=>{drag=false;cv.style.cursor='grab';});
@@ -352,7 +511,9 @@ draw();</script></body></html>'''
     html = (html.replace("__PLAN__", imgs["plan"]).replace("__OVERLAY__", imgs["overlay"])
                 .replace("__AERIAL__", imgs["aerial"]).replace("__COUNT__", str(len(polys)))
                 .replace("__INITSC__", str(init_sc))
-                .replace("__TEX__", tex_js).replace("__DATA__", json.dumps(data, ensure_ascii=False)))
+                .replace("__TEX__", tex_js)
+                .replace("__DETAILS__", json.dumps(det, ensure_ascii=False))
+                .replace("__DATA__", json.dumps(data, ensure_ascii=False)))
     open(PREVIEW, "w", encoding="utf-8", newline="\n").write(html)
     return len(html.encode("utf-8"))
 
@@ -361,13 +522,16 @@ def main():
     d = json.load(open(OUTLINES, encoding="utf-8"))
     polys = d["polygons"]
     textures = make_textures()
-    parts = build_parts(polys)
+    details = compute_details(polys)
+    parts = build_parts(polys, details)
     size, tris, prims = build_glb(parts, textures)
-    html_size = make_preview(polys, textures)
-    rep = {"stage": "材质与光影", "source": "官方总平面图真实轮廓 + 程序化材质（按实拍配色）",
-           "polygons": len(polys), "primitives": prims, "triangles": tris,
+    html_size = make_preview(polys, details, textures)
+    rep = {"stage": "材质与光影 + 场景细节回填 + 层数分档",
+           "source": "官方总平面图真实轮廓 + 程序化材质（按实拍配色）",
+           "polygons": len(polys), "scene_details": len(details),
+           "primitives": prims, "triangles": tris,
            "textures": list(textures), "glb_bytes": size, "preview_bytes": html_size,
-           "note": "材质为程序化近似，非逐栋照片贴图；需要每栋正面照才能进一步照片级还原"}
+           "note": "材质为程序化近似，非逐栋照片贴图；建筑高度按公开资料常见层数分档（11/15/18/21m）"}
     json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     print("材质模型:", size, "bytes | 三角面", tris, "| 纹理", len(textures))
     print("离线预览:", html_size, "bytes")

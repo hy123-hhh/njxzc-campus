@@ -8,6 +8,7 @@ on:
       - 'scripts/extract_outlines.py'
       - 'scripts/refine_geometry.py'
       - 'scripts/build_geometry.py'
+      - 'scripts/build_materials.py'
       - '.github/workflows/build-geometry.yml'
 
 permissions:
