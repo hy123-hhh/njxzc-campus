@@ -6,7 +6,7 @@
   "primitives": 1428,
   "triangles": 28548,
   "ground_map": "refs/official_01_plan_d.jpg (1800x2395)",
-  "glb_bytes": 4364880,
+  "glb_bytes": 4364876,
   "preview_bytes": 3468253,
   "note": "地面铺真实规划图（与轮廓同一坐标系）；建筑按徽派程序化上色（青砖墙纹理/小瓦顶纹理/马头墙黛瓦山墙）；坐标由图上 100m 比例尺定标"
 }
