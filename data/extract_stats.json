@@ -10,29 +10,29 @@
   ],
   "classes": {
     "building": {
-      "raw_pixels": 1113646,
-      "contours_found": 646,
-      "kept": 15,
-      "total_area_px": 2351369.5
+      "raw_pixels": 191797,
+      "contours_found": 1133,
+      "kept": 24,
+      "total_area_px": 146596.5
     },
     "water": {
-      "raw_pixels": 170606,
-      "contours_found": 16,
-      "kept": 9,
-      "total_area_px": 86472.5
+      "raw_pixels": 138159,
+      "contours_found": 11,
+      "kept": 6,
+      "total_area_px": 48100.0
     },
     "green": {
-      "raw_pixels": 882260,
-      "contours_found": 944,
-      "kept": 49,
-      "total_area_px": 323612.5
+      "raw_pixels": 1065091,
+      "contours_found": 709,
+      "kept": 55,
+      "total_area_px": 362814.5
     },
     "road": {
-      "raw_pixels": 1703726,
-      "contours_found": 255,
-      "kept": 29,
-      "total_area_px": 1742054.0
+      "raw_pixels": 841166,
+      "contours_found": 175,
+      "kept": 6,
+      "total_area_px": 2239918.5
     }
   },
-  "polygons_total": 102
+  "polygons_total": 91
 }
