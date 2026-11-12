@@ -13,7 +13,7 @@ import os
 import cv2
 import numpy as np
 
-from extract_outlines import classify_masks, clean, MIN_AREA, WORK_W
+from extract_outlines import classify_masks, clean, MIN_AREA, WORK_W, building_union_mask
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLAN = os.path.join(ROOT, "refs", "official_01_plan_d.jpg")
@@ -49,27 +49,42 @@ def detect_scale(small):
     return best[0], crop, (x0, y0, x1, y1)
 
 
-def split_buildings(mask, min_area=420):
-    """腐蚀断开连体建筑 -> 连通域 -> 膨胀恢复尺寸 -> 逐栋轮廓。"""
+def extract_buildings(umask, work_h):
+    """合并建筑掩码 -> 逐栋轮廓。
+
+    楼群可能经屋顶斜线/走廊粘连成大组件，先腐蚀断开，再逐核膨胀恢复并
+    与原掩码求交，得到逐栋轮廓。过滤条件：
+      - 面积 300..60000 px²（约 92..18300 m²，超出必为纸面/大区域误判）
+      - 外接框充实度 >= 0.45、长宽比 <= 14
+      - 实心率 pix/contourArea >= 0.55（剔除操场跑道类空心环）
+      - 角部图例区剔除"""
     k = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    eroded = cv2.erode(mask, k, iterations=ERODE_ITER)
+    eroded = cv2.erode(umask, k, iterations=2)
     n, labels, stats, _ = cv2.connectedComponentsWithStats(eroded, 8)
     out = []
     for i in range(1, n):
-        if stats[i, cv2.CC_STAT_AREA] < 90:
+        if stats[i, cv2.CC_STAT_AREA] < 80:
             continue
         comp = (labels == i).astype(np.uint8) * 255
-        grown = cv2.dilate(comp, k, iterations=ERODE_ITER)
-        grown = cv2.bitwise_and(grown, mask)
+        grown = cv2.dilate(comp, k, iterations=2)
+        grown = cv2.bitwise_and(grown, umask)
         cs, _ = cv2.findContours(grown, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for c in cs:
             a = cv2.contourArea(c)
-            if a < min_area:
+            if a < 300 or a > 60000:
                 continue
             bx, by, bw, bh = cv2.boundingRect(c)
-            if a / max(bw * bh, 1) < 0.24:
+            if bx > 0.70 * WORK_W and by > 0.66 * work_h:
+                continue
+            if bx < 0.24 * WORK_W and by > 0.84 * work_h:
+                continue
+            if a / max(bw * bh, 1) < 0.45:
                 continue
             if bw / max(bh, 1) > 14 or bh / max(bw, 1) > 14:
+                continue
+            tmp = np.zeros(umask.shape, np.uint8)
+            cv2.drawContours(tmp, [c], -1, 1, -1)
+            if float(tmp.sum()) / max(a, 1.0) < 0.55:
                 continue
             out.append(c)
     return out
@@ -100,8 +115,8 @@ def main():
                 round((py - h / 2) / px_per_m, 2)]
 
     masks = classify_masks(small)
-    bmask = clean(masks["building"], 3)
-    parts = split_buildings(bmask)
+    umask, _pockets = building_union_mask(small)
+    parts = extract_buildings(umask, h)
     overlay = small.copy()
     polys = []
     for i, c in enumerate(parts):

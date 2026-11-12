@@ -21,21 +21,63 @@ OUT_OVERLAY = os.path.join(ROOT, "docs", "outline_overlay.jpg")
 WORK_W = 1800
 X_MIN, X_MAX = -350.0, 350.0
 Z_MIN, Z_MAX = -450.0, 450.0
-MIN_AREA = {"building": 520, "water": 600, "green": 1600, "road": 1800}
+# 图例实测色（RGB）：新建建筑 salmon=(237,168,128) -> BGR 排序
+SALMON_BGR = (117, 142, 227)
+MIN_AREA = {"building": 300, "water": 600, "green": 1600, "road": 1800}
 
 
 def classify_masks(bgr):
+    """按规划图真实调色板分层（2026-11-11 依据图例色卡重校）：
+    楼 = salmon 新建建筑（白底保留建筑由 building_union_mask 的封闭口袋负责）
+    水 = 浅蓝 (138,164,212) 系；绿地 = 各档绿（黄扇形铺装 g<r 不会误入）；
+    路 = 中灰/浅灰铺装 + 米黄色路面。"""
     b, g, r = bgr[:, :, 0].astype(np.int16), bgr[:, :, 1].astype(np.int16), bgr[:, :, 2].astype(np.int16)
     mx = np.maximum(np.maximum(r, g), b)
     mn = np.minimum(np.minimum(r, g), b)
     sat = mx - mn
-    warm = (r > g + 14) & (g > b + 4) & (r > 135) & (sat > 28)
-    gray = (sat < 34) & (mx > 95) & (mx < 214)
-    building = (warm | gray).astype(np.uint8) * 255
-    water = ((b > r + 20) & (b > g + 6) & (b > 105) & (sat > 30)).astype(np.uint8) * 255
-    green = ((g > r + 9) & (g > b + 7) & (g > 95) & (sat > 24)).astype(np.uint8) * 255
-    road = ((mn > 222) & (sat < 26)).astype(np.uint8) * 255
+    salmon = (np.abs(b - SALMON_BGR[0]) + np.abs(g - SALMON_BGR[1]) + np.abs(r - SALMON_BGR[2])) < 100
+    building = salmon.astype(np.uint8) * 255
+    water = ((b > r + 40) & (b > g + 25) & (b > 185)).astype(np.uint8) * 255
+    green = ((g > r + 12) & (g > b + 12)).astype(np.uint8) * 255
+    road = (((sat < 30) & (mn > 118) & (mn < 216)) |
+            ((r > g + 8) & (g > b + 8) & (r > 200) & (sat > 28) & (sat < 95))).astype(np.uint8) * 255
     return {"building": building, "water": water, "green": green, "road": road}
+
+
+def building_union_mask(bgr):
+    """最终建筑掩码 = 封闭白色口袋(保留建筑) ∪ salmon(新建建筑)。
+
+    保留建筑是白底+深灰封闭描边：对白色掩码做形态学闭运算弥合文字/编号，
+    再从图外 flood-fill，灌不到的白口袋即楼体；外圈补白边保证种子点在纸面。
+    返回 (union_mask, pockets_mask) 便于诊断。"""
+    h, w = bgr.shape[:2]
+    b, g, r = bgr[:, :, 0].astype(np.int16), bgr[:, :, 1].astype(np.int16), bgr[:, :, 2].astype(np.int16)
+    mx = np.maximum(np.maximum(r, g), b)
+    mn = np.minimum(np.minimum(r, g), b)
+    sat = mx - mn
+    white = ((mn > 205) & (sat < 26)).astype(np.uint8) * 255
+    k = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    white = cv2.morphologyEx(white, cv2.MORPH_CLOSE, k, iterations=2)
+    padded = np.pad(white, 2, constant_values=255)
+    ff = padded.copy()
+    seed = np.zeros((h + 6, w + 6), np.uint8)
+    cv2.floodFill(ff, seed, (0, 0), 0)
+    pockets = ff[2:-2, 2:-2]
+    # 深灰屋顶斜线环（保留建筑的坡顶画法）：先开运算去掉 1-2px 的铺装格线，
+    # 只留 >=3px 的斜线带；再只取白口袋周边 15px 内的深灰，绿色主导（树）排除。
+    green_dom = (g > r + 15) & (g > b + 15)
+    dark = ((mn < 115) & (mx < 130) & (sat < 70) & (~green_dom)).astype(np.uint8) * 255
+    k3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    dark = cv2.morphologyEx(dark, cv2.MORPH_OPEN, k3, iterations=1)
+    near = cv2.dilate(pockets, cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15)))
+    dark_near = cv2.bitwise_and(dark, near)
+    salmon = (np.abs(b - SALMON_BGR[0]) + np.abs(g - SALMON_BGR[1]) + np.abs(r - SALMON_BGR[2])) < 100
+    salmon = (salmon.astype(np.uint8)) * 255
+    salmon = cv2.morphologyEx(salmon, cv2.MORPH_CLOSE, k3, iterations=1)
+    union = cv2.bitwise_or(pockets, salmon)
+    union = cv2.bitwise_or(union, dark_near)
+    union = cv2.morphologyEx(union, cv2.MORPH_CLOSE, k3, iterations=1)
+    return union, pockets
 
 
 def clean(mask, k=3):
