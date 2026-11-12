@@ -7,3 +7,7 @@ Thumbs.db
 .tmp/
 _temp/
 .playwright-cli/
+.playwright-cli/
+docs/pv_*.png
+refs/_*
+docs/_*
