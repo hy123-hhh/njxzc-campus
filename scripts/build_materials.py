@@ -25,7 +25,7 @@ GLB = os.path.join(ROOT, "models", "campus_textured.glb")
 REPORT = os.path.join(ROOT, "models", "materials_report.json")
 PREVIEW = os.path.join(ROOT, "docs", "离线预览.html")
 
-# 徽派配色（2026-11-12 按校史馆沙盘实拍校准）：粉墙近白 / 小瓦中灰 / 黛瓦压顶山墙保持深色对比
+# 徽派配色（2026-11-12 按校史馆沙盘实拍校准；v2 含三维预览渲染修复）：粉墙近白 / 小瓦中灰 / 黛瓦压顶山墙保持深色对比
 FLAT = {
     "building": (224, 226, 225), "roof": (108, 114, 120),
     "water": (111, 168, 207), "green": (127, 168, 90),
