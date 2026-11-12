@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - heading "南京晓庄学院（方山校区）· 1:1 轮廓 + 真实规划图地面" [level=1] [ref=e2]
+  - paragraph [ref=e3]: 几何形状逐像素取自官方总平面图，坐标由图上 100m 比例尺定标；地面直接铺真实规划图（与轮廓同一坐标系，俯视即为校园地图），并标注主要功能区。建筑已按徽派风格（青砖小瓦马头墙）程序化上色并出挑山墙。
+  - generic [ref=e4]: 本页自包含、不联网。左下角「规划总平面图」与三维场景地面是同一张图。建筑按徽派（青砖小瓦马头墙）风格程序化上色与出挑山墙；坐标为线性映射示意值，非测绘成果。
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - heading "官方规划总平面图（地面底图）" [level=3] [ref=e7]
+      - img "总平面图" [ref=e8]
+    - generic [ref=e9]:
+      - heading "云端描边验收" [level=3] [ref=e10]
+      - img "描边验收" [ref=e11]
+    - generic [ref=e12]:
+      - heading "对标效果图（徽派写实渲染）" [level=3] [ref=e13]
+      - img "对标" [ref=e14]
+  - heading "校园地图与三维预览" [level=2] [ref=e15]
+  - generic [ref=e16]:
+    - button "俯视地图" [ref=e17] [cursor=pointer]
+    - button "三维预览" [ref=e18] [cursor=pointer]
+    - text: 默认俯视图：真实规划图 + 楼栋填色 + 中文标注 + 100m 比例尺
+  - generic [ref=e20]: 共 136 个真实轮廓。来源：学校发展规划处公开总平面规划图；实拍来自公开媒体转载，版权归原发布方。教学展示用途 · 示意性布局 · 非测绘成果。

@@ -171,10 +171,7 @@ def compute_details(polys):
         add("tower", c[0] + 52, c[1], 18, 18, 40, "#b8cdd9", "图书馆东塔")
     add("treeline", -400, 0, 10, 900, 11, "#d9a441", "西门银杏树列")
     add("treeline", 230, 60, 10, 700, 10, "#e3b7c4", "樱花大道树列")
-    add("flowerbed", -200, -30, 12, 260, 0.8, "#c04b40", "中轴红色花带西")
-    add("flowerbed", 80, -30, 12, 260, 0.8, "#c04b40", "中轴红色花带东")
-    add("track", 300, -380, 190, 130, 0.4, "#b5544a", "北操场跑道环")
-    add("track", 100, 430, 190, 140, 0.4, "#b5544a", "南操场跑道环")
+    # 花带/跑道环已由地面贴图承载（2026-11-12），3D 实心盒视觉过大，移除
     add("rockery", -400, -200, 50, 30, 5, "#b9b5a9", "西门假山")
     add("monument", -430, 180, 24, 9, 6, "#a9a49a", "校名石")
     add("bridge", 100, -20, 70, 9, 2, "#cfc9bb", "湖上石桥")
@@ -712,7 +709,7 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <h2>校园地图与三维预览</h2>
 <div class="ctl"><button onclick="setView(2)">俯视地图</button> <button onclick="setView(3)">三维预览</button>
 <span id="hint">默认俯视图：真实规划图 + 楼栋填色 + 中文标注 + 100m 比例尺</span></div>
-<canvas id="cv" width="1000" height="600"></canvas>
+<canvas id="cv" width="1400" height="920" style="width:100%;max-width:1400px"></canvas>
 <div class="ctl" id="ctl3d" style="display:none">左右拖动旋转，上下平移，滚轮缩放　<button onclick="resetView()">重置视角</button>
 <label><input type="checkbox" id="ground" checked onchange="draw()"> 规划图地面</label>
 <label><input type="checkbox" id="label" checked onchange="draw()"> 标注</label>
@@ -726,10 +723,11 @@ const GROUND=document.getElementById('planimg').src.split(',')[1];
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const GIMG=new Image();GIMG.onload=draw;GIMG.src='data:image/jpeg;base64,'+GROUND;
 const BASE={building:'#e0e2e1',roof:'#6c7278',maotou:'#22272c',water:'#6fa8cf',green:'#7fa85a',road:'#c0c4bc'};
-let ang=-.62,sc=__INITSC__,panX=0,panY=140,drag=false,lx=0,ly=0,view=2;
+let ang=-.62,zoom=1,panX=0,panY=140,drag=false,lx=0,ly=0,view=2;
+function baseScale(){return Math.min(cv.width/2100,cv.height/1120);}
 function sh(h,f){const s=h.replace('#','');return 'rgb('+[0,2,4].map(i=>Math.min(255,parseInt(s.slice(i,i+2),16)*f|0)).join(',')+')';}
 function proj(x,y,z){const c=Math.cos(ang),s=Math.sin(ang),rx=x*c-z*s,rz=x*s+z*c;
-return [cv.width/2+(rx-rz)*.866*sc+panX,cv.height/2+(rx+rz)*.5*sc-y*sc*.9+panY];}
+return [cv.width/2+(rx-rz)*.866*sc+panX,cv.height/2+(rx+rz)*.5*sc-y*sc*1.45+panY];}
 function poly3(pts,fill,stroke){ctx.beginPath();pts.forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
 ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke||'rgba(35,45,60,.25)';ctx.lineWidth=.5;ctx.stroke();}
 function area(p){let a=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return Math.abs(a)/2;}
@@ -831,12 +829,10 @@ for(let k=3;k>=0;k--)ctx.lineTo(t[k][0],t[k][1]);
 ctx.closePath();ctx.fillStyle=BASE.maotou;ctx.fill();
 ctx.strokeStyle='rgba(18,22,26,.5)';ctx.lineWidth=.5;ctx.stroke();}}
 }
-function draw3D(){fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();const trees=document.getElementById('tree').checked;
+function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();const trees=document.getElementById('tree').checked;
 const order=DATA.slice().sort((a,b)=>{const ca=a.p.reduce((s,p)=>s+p[0]+p[1],0)/a.p.length,cb=b.p.reduce((s,p)=>s+p[0]+p[1],0)/b.p.length;return ca-cb;});
 order.forEach(r=>{const p=r.p;if(p.length<3)return;
-if(r.c!=='building'){const y=r.c==='water'?.14:(r.c==='green'?.1:.2);
-poly3(p.map(q=>[q[0],y,q[1]]),BASE[r.c]);
-if(r.c==='green'&&trees){const cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;
+if(r.c!=='building'){ if(r.c==='green'&&trees){const cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;
 for(let i=0;i<Math.min(10,Math.max(2,Math.floor(area(p)/900)));i++){const a=i*2.4;const q=proj(cx+Math.cos(a)*9,3,cz+Math.sin(a)*9);
 ctx.beginPath();ctx.arc(q[0],q[1],3.2,0,7);ctx.fillStyle='rgba(72,116,62,.75)';ctx.fill();}}
 return;}
@@ -864,8 +860,8 @@ if(GIMG.complete&&GIMG.naturalWidth){ctx.drawImage(GIMG,ox-497.24*scm,oy-661.05*
 const S=(x,z)=>[ox+x*scm,oy+z*scm];
 DATA.forEach(r=>{const p=r.p;if(p.length<3)return;ctx.beginPath();
 p.forEach((q,i)=>{const s=S(q[0],q[1]);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1]);});ctx.closePath();
-const c={building:'rgba(120,126,128,.20)',water:'rgba(70,140,200,.38)',green:'rgba(96,164,96,.26)',road:'rgba(150,150,150,.14)'}[r.c];
-ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=r.c==='building'?'rgba(40,55,70,.78)':'rgba(30,90,140,.7)';ctx.lineWidth=1;ctx.stroke();});
+const c={building:'rgba(235,237,235,.94)',water:'rgba(70,140,200,.38)',green:'rgba(96,164,96,.26)',road:'rgba(150,150,150,.14)'}[r.c];
+ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=r.c==='building'?'rgba(38,50,60,.92)':'rgba(30,90,140,.7)';ctx.lineWidth=r.c==='building'?1.6:1;ctx.stroke();});
 ctx.font='600 15px "Microsoft YaHei",sans-serif';ctx.textAlign='center';
 LABELS.forEach(L=>{const s=S(L.x,L.z);const tw=ctx.measureText(L.n).width;
 ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(s[0]-tw/2-6,s[1]-18,tw+12,20);
@@ -881,12 +877,12 @@ ctx.beginPath();ctx.moveTo(nx,ny+14);ctx.lineTo(nx,ny-10);ctx.stroke();
 ctx.beginPath();ctx.moveTo(nx-5,ny-3);ctx.lineTo(nx,ny-12);ctx.lineTo(nx+5,ny-3);ctx.closePath();ctx.fill();
 ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('N',nx,ny+26);}
 function draw(){if(view===2)draw2D();else draw3D();}
-function resetView(){ang=-.62;sc=__INITSC__;panX=0;panY=140;draw();}
+function resetView(){ang=-.62;zoom=1;panX=0;panY=140;draw();}
 function setView(v){view=v;document.getElementById('ctl3d').style.display=v===3?'block':'none';draw();}
 cv.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.style.cursor='grabbing';});
 window.addEventListener('mouseup',()=>{drag=false;cv.style.cursor='grab';});
 window.addEventListener('mousemove',e=>{if(!drag)return;ang+=(e.clientX-lx)*.008;panY+=(e.clientY-ly)*.5;lx=e.clientX;ly=e.clientY;draw();});
-cv.addEventListener('wheel',e=>{e.preventDefault();sc*=e.deltaY>0?.9:1.1;draw();},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom*=e.deltaY>0?.9:1.1;draw();},{passive:false});
 draw();</script></body></html>'''
     all_pts = [q for p in polys for q in p["points"]]
     span = max(max(q[0] for q in all_pts) - min(q[0] for q in all_pts),
