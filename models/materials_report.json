@@ -1,12 +1,13 @@
 {
-  "stage": "徽派风格（青砖小瓦马头墙）+ 真实规划图地面 + 中文标注",
-  "source": "官方总平面图真实轮廓 + 真实规划图地面贴图",
+  "stage": "徽派风格（青砖小瓦马头墙）+ 真实规划图地面 + 树木 + 中文标注",
+  "source": "官方总平面图真实轮廓 + 真实规划图地面贴图 + 树符号位置",
   "polygons": 136,
-  "scene_details": 12,
-  "primitives": 1428,
-  "triangles": 28548,
+  "scene_details": 10,
+  "trees": 1454,
+  "primitives": 4332,
+  "triangles": 71818,
   "ground_map": "refs/official_01_plan_d.jpg (1800x2395)",
-  "glb_bytes": 4364876,
-  "preview_bytes": 3468253,
+  "glb_bytes": 9822872,
+  "preview_bytes": 3541739,
   "note": "地面铺真实规划图（与轮廓同一坐标系）；建筑按徽派程序化上色（青砖墙纹理/小瓦顶纹理/马头墙黛瓦山墙）；坐标由图上 100m 比例尺定标"
 }

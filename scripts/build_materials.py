@@ -169,13 +169,49 @@ def compute_details(polys):
         c = bs[0]["centroid"]
         add("tower", c[0] - 52, c[1], 18, 18, 40, "#d9dde0", "图书馆西塔")
         add("tower", c[0] + 52, c[1], 18, 18, 40, "#b8cdd9", "图书馆东塔")
-    add("treeline", -400, 0, 10, 900, 11, "#d9a441", "西门银杏树列")
-    add("treeline", 230, 60, 10, 700, 10, "#e3b7c4", "樱花大道树列")
+    # 树列由 data/trees.json 真实树位替代（2026-11-13）
     # 花带/跑道环已由地面贴图承载（2026-11-12），3D 实心盒视觉过大，移除
     add("rockery", -400, -200, 50, 30, 5, "#b9b5a9", "西门假山")
     add("monument", -430, 180, 24, 9, 6, "#a9a49a", "校名石")
     add("bridge", 100, -20, 70, 9, 2, "#cfc9bb", "湖上石桥")
     return d
+
+
+TREE_GREENS = ["#5d8a4a", "#6a975a", "#4f7d42", "#77a163"]
+TREES_PATH = os.path.join(ROOT, "data", "trees.json")
+
+
+def tree_geometry(t):
+    """单棵树：3 面树干 + 8 棱台树冠（24 三角面/棵），四种绿色哈希分桶。"""
+    x, z, r, h = t["x"], t["z"], t["r"], t["h"]
+    col = TREE_GREENS[(int(abs(x) * 7 + abs(z) * 3)) % 4]
+    out = []
+    m = TMesh()
+    for i in range(3):
+        a, b = 2 * math.pi * i / 3, 2 * math.pi * (i + 1) / 3
+        q0 = (x + 0.16 * math.cos(a), z + 0.16 * math.sin(a))
+        q1 = (x + 0.16 * math.cos(b), z + 0.16 * math.sin(b))
+        m.quad([(q0[0], 0, q0[1]), (q1[0], 0, q1[1]),
+                (q1[0], 1.1, q1[1]), (q0[0], 1.1, q0[1])],
+               (0, 0, 1), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    out.append((m, "solid_6b4f3a"))
+    c = TMesh()
+    seg = 8
+    y0, y1 = 0.9, h
+    r0, r1 = r, r * 0.72
+    for i in range(seg):
+        a, b = 2 * math.pi * i / seg, 2 * math.pi * (i + 1) / seg
+        q0 = (x + r0 * math.cos(a), z + r0 * math.sin(a))
+        q1 = (x + r0 * math.cos(b), z + r0 * math.sin(b))
+        p0 = (x + r1 * math.cos(a), z + r1 * math.sin(a))
+        p1 = (x + r1 * math.cos(b), z + r1 * math.sin(b))
+        c.quad([(q0[0], y0, q0[1]), (q1[0], y0, q1[1]),
+                (p1[0], y1, p1[1]), (p0[0], y1, p0[1])],
+               (0, 0, 1), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        c.tri([(x, y1, z), (p0[0], y1, p0[1]), (p1[0], y1, p1[1])],
+              (0, 1, 0), [(.5, .5), (0, 0), (1, 0)])
+    out.append((c, "solid_" + col.lstrip("#")))
+    return out
 
 
 def detail_geometry(item):
@@ -677,7 +713,7 @@ def b64(path):
     return base64.b64encode(open(path, "rb").read()).decode()
 
 
-def make_preview(polys, details, labels, ground):
+def make_preview(polys, details, labels, ground, trees=None):
     data = [{"c": p["class"], "p": p["points"]} for p in polys]
     det = [{"t": d["t"], "x": d["x"], "z": d["z"], "w": d["w"],
             "d": d["d"], "h": d["h"], "c": d["c"], "n": d["n"]} for d in details]
@@ -723,6 +759,8 @@ const GROUND=document.getElementById('planimg').src.split(',')[1];
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const GIMG=new Image();GIMG.onload=draw;GIMG.src='data:image/jpeg;base64,'+GROUND;
 const BASE={building:'#e0e2e1',roof:'#6c7278',maotou:'#22272c',water:'#6fa8cf',green:'#7fa85a',road:'#c0c4bc'};
+const TREES=__TREES__;
+const TGREEN=['#5d8a4a','#6a975a','#4f7d42','#77a163'];
 let ang=-.62,zoom=1,panX=0,panY=140,drag=false,lx=0,ly=0,view=2;
 function baseScale(){return Math.min(cv.width/2100,cv.height/1120);}
 function sh(h,f){const s=h.replace('#','');return 'rgb('+[0,2,4].map(i=>Math.min(255,parseInt(s.slice(i,i+2),16)*f|0)).join(',')+')';}
@@ -829,13 +867,19 @@ for(let k=3;k>=0;k--)ctx.lineTo(t[k][0],t[k][1]);
 ctx.closePath();ctx.fillStyle=BASE.maotou;ctx.fill();
 ctx.strokeStyle='rgba(18,22,26,.5)';ctx.lineWidth=.5;ctx.stroke();}}
 }
-function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();const trees=document.getElementById('tree').checked;
-const order=DATA.slice().sort((a,b)=>{const ca=a.p.reduce((s,p)=>s+p[0]+p[1],0)/a.p.length,cb=b.p.reduce((s,p)=>s+p[0]+p[1],0)/b.p.length;return ca-cb;});
-order.forEach(r=>{const p=r.p;if(p.length<3)return;
-if(r.c!=='building'){ if(r.c==='green'&&trees){const cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;
-for(let i=0;i<Math.min(10,Math.max(2,Math.floor(area(p)/900)));i++){const a=i*2.4;const q=proj(cx+Math.cos(a)*9,3,cz+Math.sin(a)*9);
-ctx.beginPath();ctx.arc(q[0],q[1],3.2,0,7);ctx.fillStyle='rgba(72,116,62,.75)';ctx.fill();}}
-return;}
+function drawTree(t){const showT=document.getElementById('tree').checked;if(!showT)return;
+const q0=proj(t.x,0.4,t.z),q1=proj(t.x,t.h*.55,t.z),qc=proj(t.x,t.h*.78,t.z);
+ctx.strokeStyle='#6b4f3a';ctx.lineWidth=Math.max(1,t.r*sc*.35);
+ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke();
+ctx.beginPath();ctx.arc(qc[0],qc[1],Math.max(1.5,t.r*sc*.85),0,7);
+ctx.fillStyle=TGREEN[Math.floor(Math.abs(t.x*7+t.z*3))%4];ctx.fill();
+ctx.strokeStyle='rgba(40,62,34,.35)';ctx.lineWidth=.5;ctx.stroke();}
+function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();
+const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+p[0]+p[1],0)/r.p.length,f:()=>drawRec(r)}))
+.concat(TREES.map(t=>({s:t.x+t.z,f:()=>drawTree(t)}))).sort((a,b)=>a.s-b.s);
+order.forEach(o=>o.f());
+function drawRec(r){const p=r.p;if(p.length<3)return;
+if(r.c!=='building'){return;}
 const a=area(p),h=height(a),cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;
 poly3(p.map(q=>[q[0]+14,.02,q[1]+10]),'rgba(52,64,58,.12)');
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length];
@@ -849,7 +893,7 @@ poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(BAS
 poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(BASE.roof,1.15));
 ctx.strokeStyle='rgba(20,26,30,.45)';ctx.lineWidth=.6;{const sp=ip.map(q=>proj(q[0],h+rise,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}
 drawMaotou(p,h);
-});
+}
 DETAILS.forEach(d=>drawDetail(d));
 drawLabels();
 }
@@ -862,6 +906,8 @@ DATA.forEach(r=>{const p=r.p;if(p.length<3)return;ctx.beginPath();
 p.forEach((q,i)=>{const s=S(q[0],q[1]);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1]);});ctx.closePath();
 const c={building:'rgba(235,237,235,.94)',water:'rgba(70,140,200,.38)',green:'rgba(96,164,96,.26)',road:'rgba(150,150,150,.14)'}[r.c];
 ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=r.c==='building'?'rgba(38,50,60,.92)':'rgba(30,90,140,.7)';ctx.lineWidth=r.c==='building'?1.6:1;ctx.stroke();});
+if(document.getElementById('tree').checked){ctx.fillStyle='rgba(72,116,62,.8)';
+TREES.forEach(t=>{const s=S(t.x,t.z);ctx.beginPath();ctx.arc(s[0],s[1],1.6,0,7);ctx.fill();});}
 ctx.font='600 15px "Microsoft YaHei",sans-serif';ctx.textAlign='center';
 LABELS.forEach(L=>{const s=S(L.x,L.z);const tw=ctx.measureText(L.n).width;
 ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(s[0]-tw/2-6,s[1]-18,tw+12,20);
@@ -893,7 +939,8 @@ draw();</script></body></html>'''
                 .replace("__INITSC__", str(init_sc))
                 .replace("__LABELS__", json.dumps(labels, ensure_ascii=False))
                 .replace("__DETAILS__", json.dumps(det, ensure_ascii=False))
-                .replace("__DATA__", json.dumps(data, ensure_ascii=False)))
+                .replace("__DATA__", json.dumps(data, ensure_ascii=False))
+                .replace("__TREES__", json.dumps(trees or [], ensure_ascii=False)))
     open(PREVIEW, "w", encoding="utf-8", newline="\n").write(html)
     return len(html.encode("utf-8"))
 
@@ -906,11 +953,17 @@ def main():
     details = compute_details(polys)
     labels = compute_labels(polys)
     parts = build_parts(polys, details)
+    # 树：位置取自规划图树符号（extract_trees.py）
+    trees = []
+    if os.path.exists(TREES_PATH):
+        trees = json.load(open(TREES_PATH, encoding="utf-8"))["trees"]
+        for t in trees:
+            parts.extend(tree_geometry(t))
     size, tris, prims = build_glb(parts, ground, textures)
-    html_size = make_preview(polys, details, labels, ground)
-    rep = {"stage": "徽派风格（青砖小瓦马头墙）+ 真实规划图地面 + 中文标注",
-           "source": "官方总平面图真实轮廓 + 真实规划图地面贴图",
-           "polygons": len(polys), "scene_details": len(details),
+    html_size = make_preview(polys, details, labels, ground, trees)
+    rep = {"stage": "徽派风格（青砖小瓦马头墙）+ 真实规划图地面 + 树木 + 中文标注",
+           "source": "官方总平面图真实轮廓 + 真实规划图地面贴图 + 树符号位置",
+           "polygons": len(polys), "scene_details": len(details), "trees": len(trees),
            "primitives": prims, "triangles": tris,
            "ground_map": "refs/official_01_plan_d.jpg (1800x2395)",
            "glb_bytes": size, "preview_bytes": html_size,
