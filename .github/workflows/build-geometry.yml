@@ -9,6 +9,8 @@ on:
       - 'scripts/refine_geometry.py'
       - 'scripts/build_geometry.py'
       - 'scripts/build_materials.py'
+      - 'scripts/fix_layout.py'
+      - 'scripts/extract_trees.py'
       - '.github/workflows/build-geometry.yml'
 
 permissions:
@@ -44,6 +46,12 @@ jobs:
       - name: Split buildings and calibrate scale from plan ruler
         run: python scripts/refine_geometry.py
 
+      - name: Layout audit fix (delete field mis-builds, add missing buildings, pond exclusion)
+        run: python scripts/fix_layout.py
+
+      - name: Extract tree positions from plan
+        run: python scripts/extract_trees.py
+
       - name: Extrude outlines to GLB
         run: python scripts/build_geometry.py
 
@@ -54,7 +62,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/outlines.json data/extract_stats.json data/scale_info.json data/refine_report.json docs/outline_overlay.jpg docs/scale_crop.png docs/离线预览.html docs/materials/ models/
+          git add data/outlines.json data/trees.json data/extract_stats.json data/scale_info.json data/refine_report.json docs/outline_overlay.jpg docs/scale_crop.png docs/离线预览.html docs/materials/ models/
           if git diff --staged --quiet; then
             echo "无变化，跳过提交"
           else

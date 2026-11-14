@@ -432,7 +432,31 @@ def build_parts(polys, details=None):
             parts.append((mm, mk))
     for item in (details or []):
         parts.extend(detail_geometry(item))
+    # 立体操场：北/南（绿茵场实测 bbox，跑道环绕外圈）
+    parts.extend(stadium_geometry(274, -478.5, 65, 91.5, 47, 69.5))
+    parts.extend(stadium_geometry(69, 427, 83.5, 102, 65.5, 84))
     return parts
+
+
+def stadium_geometry(cx, cz, ax, bz, axi, bzi, seg=28):
+    """立体操场：红色跑道环（h=0.4）+ 内圈绿茵场（h=0.18）。尺寸单位米。"""
+    H1, H2 = 0.4, 0.18
+    ring, disc = TMesh(), TMesh()
+    for i in range(seg):
+        a0, a1 = 2 * math.pi * i / seg, 2 * math.pi * (i + 1) / seg
+        o0 = (cx + ax * math.cos(a0), cz + bz * math.sin(a0))
+        o1 = (cx + ax * math.cos(a1), cz + bz * math.sin(a1))
+        i0 = (cx + axi * math.cos(a0), cz + bzi * math.sin(a0))
+        i1 = (cx + axi * math.cos(a1), cz + bzi * math.sin(a1))
+        ring.quad([(o0[0], H1, o0[1]), (o1[0], H1, o1[1]),
+                   (i1[0], H1, i1[1]), (i0[0], H1, i0[1])],
+                  (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        ring.quad([(o0[0], 0, o0[1]), (o1[0], 0, o1[1]),
+                   (o1[0], H1, o1[1]), (o0[0], H1, o0[1])],
+                  (1, 0, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        disc.tri([(cx, H2, cz), (i0[0], H2, i0[1]), (i1[0], H2, i1[1])],
+                 (0, 1, 0), [(.5, .5), (0, 0), (1, 0)])
+    return [(ring, "solid_c96a5c"), (disc, "solid_5f9e46")]
 
 
 def long_edges(pts):
@@ -898,7 +922,12 @@ ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke();
 ctx.beginPath();ctx.arc(qc[0],qc[1],Math.max(1.5,t.r*sc*.85),0,7);
 ctx.fillStyle=TGREEN[Math.floor(Math.abs(t.x*7+t.z*3))%4];ctx.fill();
 ctx.strokeStyle='rgba(40,62,34,.35)';ctx.lineWidth=.5;ctx.stroke();}
-function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();
+function drawFields(){if(!document.getElementById('ground').checked)return;
+const F=[[274,-478.5,65,91.5,47,69.5],[69,427,83.5,102,65.5,84]];
+F.forEach(f=>{const cx=f[0],cz=f[1],ax=f[2],bz=f[3],axi=f[4],bzi=f[5],o=[],ii=[];
+for(let i=0;i<24;i++){const a=Math.PI*2*i/24;o.push([cx+ax*Math.cos(a),cz+bz*Math.sin(a)]);ii.push([cx+axi*Math.cos(a),cz+bzi*Math.sin(a)]);}
+poly3(o.map(q=>proj(q[0],.4,q[1])),'#c96a5c');poly3(ii.map(q=>proj(q[0],.45,q[1])),'#5f9e46');});}
+function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();drawFields();
 const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+p[0]+p[1],0)/r.p.length,f:()=>drawRec(r)}))
 .concat(TREES.map(t=>({s:t.x+t.z,f:()=>drawTree(t)}))).sort((a,b)=>a.s-b.s);
 order.forEach(o=>o.f());

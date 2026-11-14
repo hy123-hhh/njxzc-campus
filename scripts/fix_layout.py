@@ -30,6 +30,11 @@ OUTLINES = os.path.join(ROOT, "data", "outlines.json")
 WORK_W = 1800
 PX_PER_M = 1.81
 FIELD_CENTERS = [(300, -450, 130), (100, 430, 130)]  # 北/南运动场中心与半径
+POND_CENTERS = [(-283, 210), (-98, -106)]  # 西南池塘/中央水塘（勿建楼）
+
+
+def in_ponds(x, z):
+    return any((x - px) ** 2 + (z - pz) ** 2 < 55 ** 2 for px, pz in POND_CENTERS)
 
 
 def poly_area(pts):
@@ -128,7 +133,7 @@ def main():
             continue
         px, py = cent[i]
         x, z = (px - WORK_W / 2) / PX_PER_M, (py - h / 2) / PX_PER_M
-        if in_fields(x, z):
+        if in_fields(x, z) or in_ponds(x, z):
             continue
         if a > 39300 or campus[min(h - 1, int(py)), min(WORK_W - 1, int(px))] == 0:
             continue  # >12000m2 的合并巨块或校园范围外：跳过
@@ -174,7 +179,7 @@ def main():
                      round((py2 + y0 - h / 2) / PX_PER_M, 2)] for px2, py2 in poly]
             cxa = sum(q[0] for q in wpts) / len(wpts)
             cza = sum(q[1] for q in wpts) / len(wpts)
-            if in_fields(cxa, cza):
+            if in_fields(cxa, cza) or in_ponds(cxa, cza):
                 continue
             new_blds.append({"class": "building", "points": wpts,
                              "centroid": [round(cxa, 1), round(cza, 1)],
