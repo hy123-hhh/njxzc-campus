@@ -49,6 +49,22 @@ def make_textures():
         cv2.line(roof, (x + 7, 0), (x + 7, S), (140, 146, 152), 1)
     out["roof"] = roof
 
+    # 蓝灰瓦：东侧宿舍板楼（沙盘实拍 2026-11-14）
+    roof_b = np.full((S, S, 3), (140, 124, 110), np.uint8)
+    roof_b = (roof_b.astype(np.int16) + rng.normal(0, 4, (S, S, 1))).clip(0, 255).astype(np.uint8)
+    for x in range(6, S, 14):
+        cv2.line(roof_b, (x, 0), (x, S), (118, 102, 90), 2)
+        cv2.line(roof_b, (x + 7, 0), (x + 7, S), (162, 148, 134), 1)
+    out["roof_blue"] = roof_b
+
+    # 橙黄瓦：小体量建筑点缀（沙盘实拍）
+    roof_w = np.full((S, S, 3), (88, 142, 196), np.uint8)
+    roof_w = (roof_w.astype(np.int16) + rng.normal(0, 4, (S, S, 1))).clip(0, 255).astype(np.uint8)
+    for x in range(6, S, 14):
+        cv2.line(roof_w, (x, 0), (x, S), (70, 118, 168), 2)
+        cv2.line(roof_w, (x + 7, 0), (x + 7, S), (108, 166, 222), 1)
+    out["roof_warm"] = roof_w
+
     # 青砖粉墙：浅底 + 水平砖缝 + 错缝竖缝
     wall = np.full((S, S, 3), (208, 210, 208), np.uint8)
     wall = (wall.astype(np.int16) + rng.normal(0, 3, (S, S, 1))).clip(0, 255).astype(np.uint8)
@@ -368,6 +384,15 @@ def build_parts(polys, details=None):
             continue
         area = abs(Polygon(pts).area)
         h = building_height(area)
+        cx = sum(q[0] for q in pts) / len(pts)
+        cz = sum(q[1] for q in pts) / len(pts)
+        if abs(cx - 312) < 8 and abs(cz + 339) < 8:
+            h = 42.0  # 16F 高楼（规划图标 16F，沙盘显著高于群楼）
+        roof_key = "roof"
+        if cx > 100 and area >= 800:
+            roof_key = "roof_blue"  # 东侧宿舍板楼：蓝灰顶
+        elif area < 700 and ((int(cx * 13 + cz * 7)) % 3 + 3) % 3 == 0:
+            roof_key = "roof_warm"  # 小体量建筑点缀橙黄顶
         body = TMesh()
         for t in tris:
             body.tri([(a, h, b) for a, b in t], (0, 1, 0),
@@ -402,7 +427,7 @@ def build_parts(polys, details=None):
         except Exception:
             pass
         if roof.pos:
-            parts.append((roof, "roof"))
+            parts.append((roof, roof_key))
         for mm, mk in maotou_geometry(pts, h):
             parts.append((mm, mk))
     for item in (details or []):
@@ -609,18 +634,17 @@ def build_glb(parts, ground, textures=None):
                      "mimeType": "image/jpeg", "name": "ground"})
         ground_tex_index = len(tex_objs)
         tex_objs.append({"sampler": 0, "source": len(imgs) - 1})
-    wall_tex_index = roof_tex_index = None
+    tex_index_by_name = {}
     if textures:
-        for tname in ("wall", "roof"):
+        for tname in ("wall", "roof", "roof_blue", "roof_warm"):
             if textures.get(tname):
                 imgs.append({"bufferView": add_view(textures[tname]),
                              "mimeType": "image/png", "name": tname})
                 ti = len(tex_objs)
                 tex_objs.append({"sampler": 0, "source": len(imgs) - 1})
-                if tname == "wall":
-                    wall_tex_index = ti
-                else:
-                    roof_tex_index = ti
+                tex_index_by_name[tname] = ti
+    wall_tex_index = tex_index_by_name.get("wall")
+    roof_tex_index = tex_index_by_name.get("roof")
     mat_index = {}
 
     def get_mat(key):
@@ -643,9 +667,9 @@ def build_glb(parts, ground, textures=None):
                          "pbrMetallicRoughness": {"baseColorTexture": {"index": wall_tex_index},
                                                   "baseColorFactor": [1, 1, 1, 1],
                                                   "metallicFactor": 0.0, "roughnessFactor": 0.95}})
-        elif key == "roof" and roof_tex_index is not None:
+        elif key in ("roof", "roof_blue", "roof_warm") and tex_index_by_name.get(key) is not None:
             mats.append({"name": key, "doubleSided": True,
-                         "pbrMetallicRoughness": {"baseColorTexture": {"index": roof_tex_index},
+                         "pbrMetallicRoughness": {"baseColorTexture": {"index": tex_index_by_name[key]},
                                                   "baseColorFactor": [1, 1, 1, 1],
                                                   "metallicFactor": 0.0, "roughnessFactor": 0.8}})
         elif key.startswith("solid_"):
@@ -880,7 +904,9 @@ const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+p[0]+p[1],0)/r.p.length,f:()=>dr
 order.forEach(o=>o.f());
 function drawRec(r){const p=r.p;if(p.length<3)return;
 if(r.c!=='building'){return;}
-const a=area(p),h=height(a),cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;
+const a=area(p),cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;let h=height(a);
+const rb=(cx>100&&a>=800)?'#566b7d':((a<700&&(((cx*13+cz*7)%3)+3)%3===0)?'#c27b35':BASE.roof);
+if(Math.abs(cx-312)<8&&Math.abs(cz+339)<8)h=42;
 poly3(p.map(q=>[q[0]+14,.02,q[1]+10]),'rgba(52,64,58,.12)');
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length];
 const lit=.72+.28*Math.abs(Math.cos(Math.atan2(v[1]-u[1],v[0]-u[0])+ang));
@@ -889,8 +915,8 @@ poly3(p.map(q=>[q[0],h,q[1]]),sh(BASE.building,1.06));
 ctx.strokeStyle='rgba(30,38,46,.32)';ctx.lineWidth=.6;{const sp=p.map(q=>proj(q[0],h,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}
 const k=.12,rise=Math.min(2.6,Math.max(1.8,h*.15)),ip=p.map(q=>[cx+(q[0]-cx)*(1-k),cz+(q[1]-cz)*(1-k)]);
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length],c=ip[i],d=ip[(i+1)%ip.length];
-poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(BASE.roof,.82+.2*((i%3)/3)));}
-poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(BASE.roof,1.15));
+poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(rb,.82+.2*((i%3)/3)));}
+poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(rb,1.15));
 ctx.strokeStyle='rgba(20,26,30,.45)';ctx.lineWidth=.6;{const sp=ip.map(q=>proj(q[0],h+rise,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}
 drawMaotou(p,h);
 }
