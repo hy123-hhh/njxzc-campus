@@ -142,21 +142,43 @@ def load_ground():
     return buf.tobytes() if ok else b""
 
 
-def compute_labels(polys):
-    """主要功能区中文标注（按真实布局锚定）。"""
-    labels = []
+NAMED_BUILDINGS = {
+    # 依据规划图编号图例（1-24）与红色编号圈实测定位（2026-11-14）
+    "图书馆": (-30, -339),
+    "工科楼": (-153, -406),
+    "文科楼": (-170, -270),
+    "教学实验楼": (34, -143),
+    "理科组团": (-220, 261),
+    "行政办公楼": (-203, -33),
+    "食堂": (259, -249),
+    "音乐楼": (-38, 212),
+    "美术楼": (-22, 132),
+    "行知组团": (167, 278),
+    "风雨操场": (-93, 317),
+}
+
+
+def nearest_building(polys, x, z):
     bs = [p for p in polys if p["class"] == "building"]
-    if bs:
-        b = max(bs, key=lambda p: p.get("area_px", 0))
-        labels.append({"n": "图书馆", "x": b["centroid"][0], "z": b["centroid"][1]})
+    return min(bs, key=lambda p: math.dist(p["centroid"], (x, z))) if bs else None
+
+
+def compute_labels(polys):
+    """主要功能区中文标注（按规划图编号圈实测锚定，2026-11-14）。"""
+    labels = []
+    for name, (x, z) in NAMED_BUILDINGS.items():
+        b = nearest_building(polys, x, z)
+        if b is not None and math.dist(b["centroid"], (x, z)) < 60:
+            c = b["centroid"]
+            labels.append({"n": name, "x": c[0], "z": c[1]})
     waters = [p for p in polys if p["class"] == "water"]
     if waters:
         w = max(waters, key=lambda p: p.get("area_px", 0))
         labels.append({"n": "人工湖", "x": w["centroid"][0], "z": w["centroid"][1]})
     labels += [
         {"n": "陶行知像", "x": -60, "z": -30},
-        {"n": "北运动场", "x": 300, "z": -380},
-        {"n": "南运动场", "x": 100, "z": 430},
+        {"n": "北运动场", "x": 274, "z": -478},
+        {"n": "南运动场", "x": 69, "z": 427},
         {"n": "西门", "x": -400, "z": 0},
         {"n": "校名石", "x": -430, "z": 180},
     ]
@@ -179,12 +201,13 @@ def compute_details(polys):
     if waters:
         c = waters[0]["centroid"]
         add("pavilion", c[0], c[1], 18, 18, 10, "#8c6d55", "湖心亭")
-    bs = sorted([p for p in polys if p["class"] == "building"],
-                key=lambda p: -p.get("area_px", 0))
-    if bs:
-        c = bs[0]["centroid"]
-        add("tower", c[0] - 52, c[1], 18, 18, 40, "#d9dde0", "图书馆西塔")
-        add("tower", c[0] + 52, c[1], 18, 18, 40, "#b8cdd9", "图书馆东塔")
+    lib = nearest_building(polys, -30, -339)
+    if lib is not None and math.dist(lib["centroid"], (-30, -339)) < 60:
+        xs = [q[0] for q in lib["points"]]
+        zc = lib["centroid"][1]
+        x0, x1 = min(xs) + 12, max(xs) - 12
+        add("tower", x0, zc, 16, 16, 40, "#d9dde0", "图书馆西塔")
+        add("tower", x1, zc, 16, 16, 40, "#b8cdd9", "图书馆东塔")
     # 树列由 data/trees.json 真实树位替代（2026-11-13）
     # 花带/跑道环已由地面贴图承载（2026-11-12），3D 实心盒视觉过大，移除
     add("rockery", -400, -200, 50, 30, 5, "#b9b5a9", "西门假山")
