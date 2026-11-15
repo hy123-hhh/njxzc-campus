@@ -171,6 +171,7 @@ if(r.c!=='building'){return;}
 const a=area(p),cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;let h=height(a);
 const rb=(cx>100&&a>=800)?'#566b7d':((a<700&&(((cx*13+cz*7)%3)+3)%3===0)?'#c27b35':BASE.roof);
 if(Math.abs(cx-312)<8&&Math.abs(cz+339)<8)h=42;
+if(Math.abs(cx-388.1)<6&&Math.abs(cz+136.9)<6)h=45;
 poly3(p.map(q=>[q[0]+14,.02,q[1]+10]),'rgba(52,64,58,.12)');
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length];
 const lit=.72+.28*Math.abs(Math.cos(Math.atan2(v[1]-u[1],v[0]-u[0])+ang));

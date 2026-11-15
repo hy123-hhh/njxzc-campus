@@ -424,6 +424,8 @@ def build_parts(polys, details=None):
         cz = sum(q[1] for q in pts) / len(pts)
         if abs(cx - 312) < 8 and abs(cz + 339) < 8:
             h = 42.0  # 16F 高楼（规划图标 16F，沙盘显著高于群楼）
+        if abs(cx - 388.1) < 6 and abs(cz + 136.9) < 6:
+            h = 45.0  # 14F 宿舍塔楼（规划图 14F 标注，东侧细高塔）
         roof_key = "roof"
         if cx > 100 and area >= 800:
             roof_key = "roof_blue"  # 东侧宿舍板楼：蓝灰顶
@@ -1010,6 +1012,7 @@ if(r.c!=='building'){return;}
 const a=area(p),cx=p.reduce((s,q)=>s+q[0],0)/p.length,cz=p.reduce((s,q)=>s+q[1],0)/p.length;let h=height(a);
 const rb=(cx>100&&a>=800)?'#566b7d':((a<700&&(((cx*13+cz*7)%3)+3)%3===0)?'#c27b35':BASE.roof);
 if(Math.abs(cx-312)<8&&Math.abs(cz+339)<8)h=42;
+if(Math.abs(cx-388.1)<6&&Math.abs(cz+136.9)<6)h=45;
 poly3(p.map(q=>[q[0]+14,.02,q[1]+10]),'rgba(52,64,58,.12)');
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length];
 const lit=.72+.28*Math.abs(Math.cos(Math.atan2(v[1]-u[1],v[0]-u[0])+ang));
