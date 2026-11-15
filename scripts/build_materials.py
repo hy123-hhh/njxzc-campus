@@ -235,7 +235,8 @@ TREES_PATH = os.path.join(ROOT, "data", "trees.json")
 def tree_geometry(t):
     """单棵树：3 面树干 + 8 棱台树冠（24 三角面/棵），四种绿色哈希分桶。"""
     x, z, r, h = t["x"], t["z"], t["r"], t["h"]
-    col = TREE_GREENS[(int(abs(x) * 7 + abs(z) * 3)) % 4]
+    hsh = int(abs(x) * 7 + abs(z) * 3)
+    col = "#d9a441" if hsh % 8 == 7 else TREE_GREENS[hsh % 4]  # 沙盘双色树：约1/8金黄
     out = []
     m = TMesh()
     for i in range(3):
@@ -987,7 +988,7 @@ const q0=proj(t.x,0.4,t.z),q1=proj(t.x,t.h*.55,t.z),qc=proj(t.x,t.h*.78,t.z);
 ctx.strokeStyle='#6b4f3a';ctx.lineWidth=Math.max(1,t.r*sc*.35);
 ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke();
 ctx.beginPath();ctx.arc(qc[0],qc[1],Math.max(1.5,t.r*sc*.85),0,7);
-ctx.fillStyle=TGREEN[Math.floor(Math.abs(t.x*7+t.z*3))%4];ctx.fill();
+const hs=Math.floor(Math.abs(t.x*7+t.z*3));ctx.fillStyle=(hs%8===7)?'#d9a441':TGREEN[hs%4];ctx.fill();
 ctx.strokeStyle='rgba(40,62,34,.35)';ctx.lineWidth=.5;ctx.stroke();}
 function drawFields(){if(!document.getElementById('ground').checked)return;
 const F=[[274,-478.5,65,91.5,47,69.5],[69,427,83.5,102,65.5,84]];
