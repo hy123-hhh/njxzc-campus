@@ -489,8 +489,8 @@ def build_parts(polys, details=None):
     for item in (details or []):
         parts.extend(detail_geometry(item))
     # 立体操场：北/南（绿茵场实测 bbox，跑道环绕外圈）
-    parts.extend(stadium_geometry(274, -478.5, 65, 91.5, 47, 69.5))
-    parts.extend(stadium_geometry(69, 427, 83.5, 102, 65.5, 84))
+    parts.extend(stadium_geometry(274, -478.5, 65, 183, 47, 147))
+    parts.extend(stadium_geometry(69, 427, 83.5, 204, 65.5, 168))
     # 北操场西看台（编号18）：跑道西缘向西逐级升高
     parts.extend(stand_geometry(207, -478, 70, 4, 3.0, 1.2))  # 仅北操场（图例18；南操场沙盘实拍无看台）
     return parts
@@ -514,23 +514,47 @@ def stand_geometry(cx_edge, cz_center, length, tiers=4, tier_w=3.0, base_h=1.2):
     return parts
 
 
+def track_pts(cx, cz, ax, bs, n=7):
+    """标准田径场边界点：两条直道（长 2*bs）+ 两端半圆（半径 ax）。"""
+    pts = []
+    for k in range(n + 1):
+        pts.append((cx + ax, cz - bs + 2 * bs * k / n))          # 右直道（下→上）
+    a = -math.pi / 2
+    for k in range(n):                                            # 上端半圆
+        a2 = -math.pi / 2 + math.pi * (k + 1) / n
+        a0m = -math.pi / 2 + math.pi * k / n
+        pts.append((cx + ax * math.cos((a0m + a2) / 2), cz + bs + ax * math.sin((a0m + a2) / 2)))
+    for k in range(n + 1):
+        pts.append((cx - ax, cz + bs - 2 * bs * k / n))          # 左直道（上→下）
+    for k in range(n):
+        a0m = math.pi / 2 + math.pi * k / n
+        a2 = math.pi / 2 + math.pi * (k + 1) / n
+        pts.append((cx + ax * math.cos((a0m + a2) / 2), cz - bs + ax * math.sin((a0m + a2) / 2)))
+    return pts
+
+
 def stadium_geometry(cx, cz, ax, bz, axi, bzi, seg=28):
-    """立体操场：红色跑道环（h=0.4）+ 内圈绿茵场（h=0.18）。尺寸单位米。"""
+    """立体操场（标准田径场形）：红色跑道环（h=0.4）+ 内圈绿茵场（h=0.18）。
+    ax/bz=外圈半宽/总长，axi/bzi=内圈半宽/总长。"""
     H1, H2 = 0.4, 0.18
     ring, disc = TMesh(), TMesh()
-    for i in range(seg):
-        a0, a1 = 2 * math.pi * i / seg, 2 * math.pi * (i + 1) / seg
-        o0 = (cx + ax * math.cos(a0), cz + bz * math.sin(a0))
-        o1 = (cx + ax * math.cos(a1), cz + bz * math.sin(a1))
-        i0 = (cx + axi * math.cos(a0), cz + bzi * math.sin(a0))
-        i1 = (cx + axi * math.cos(a1), cz + bzi * math.sin(a1))
+    bs, bsi = (bz - 2 * ax) / 2, (bzi - 2 * axi) / 2
+    O = track_pts(cx, cz, ax, bs)
+    I = track_pts(cx, cz, axi, bsi)
+    nseg = len(O)
+    for i in range(nseg):
+        o0, o1 = O[i], O[(i + 1) % nseg]
+        i0, i1 = I[i % len(I)], I[(i + 1) % len(I)]
+        _ = (a0, a1) = (0, 0)
         ring.quad([(o0[0], H1, o0[1]), (o1[0], H1, o1[1]),
                    (i1[0], H1, i1[1]), (i0[0], H1, i0[1])],
                   (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
         ring.quad([(o0[0], 0, o0[1]), (o1[0], 0, o1[1]),
                    (o1[0], H1, o1[1]), (o0[0], H1, o0[1])],
                   (1, 0, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
-        disc.tri([(cx, H2, cz), (i0[0], H2, i0[1]), (i1[0], H2, i1[1])],
+    for i in range(len(I)):
+        a, b = I[i], I[(i + 1) % len(I)]
+        disc.tri([(cx, H2, cz), (a[0], H2, a[1]), (b[0], H2, b[1])],
                  (0, 1, 0), [(.5, .5), (0, 0), (1, 0)])
     return [(ring, "solid_c96a5c"), (disc, "solid_5f9e46")]
 
@@ -1006,9 +1030,15 @@ ctx.beginPath();ctx.arc(qc[0],qc[1],Math.max(1.5,t.r*sc*.85),0,7);
 const hs=Math.floor(Math.abs(t.x*7+t.z*3));ctx.fillStyle=(hs%8===7)?'#d9a441':TGREEN[hs%4];ctx.fill();
 ctx.strokeStyle='rgba(40,62,34,.35)';ctx.lineWidth=.5;ctx.stroke();}
 function drawFields(){if(!document.getElementById('ground').checked)return;
-const F=[[274,-478.5,65,91.5,47,69.5],[69,427,83.5,102,65.5,84]];
-F.forEach(f=>{const cx=f[0],cz=f[1],ax=f[2],bz=f[3],axi=f[4],bzi=f[5],o=[],ii=[];
-for(let i=0;i<24;i++){const a=Math.PI*2*i/24;o.push([cx+ax*Math.cos(a),cz+bz*Math.sin(a)]);ii.push([cx+axi*Math.cos(a),cz+bzi*Math.sin(a)]);}
+function trackPts(cx,cz,ax,bs){const P=[],n=7;
+for(let k=0;k<=n;k++)P.push([cx+ax,cz-bs+2*bs*k/n]);
+for(let k=0;k<n;k++){const a0=-Math.PI/2+Math.PI*k/n,a1=-Math.PI/2+Math.PI*(k+1)/n;P.push([cx+ax*Math.cos((a0+a1)/2),cz+bs+ax*Math.sin((a0+a1)/2)]);}
+for(let k=0;k<=n;k++)P.push([cx-ax,cz+bs-2*bs*k/n]);
+for(let k=0;k<n;k++){const a0=Math.PI/2+Math.PI*k/n,a1=Math.PI/2+Math.PI*(k+1)/n;P.push([cx+ax*Math.cos((a0+a1)/2),cz-bs+ax*Math.sin((a0+a1)/2)]);}
+return P;}
+const F=[[274,-478.5,65,183,47,147],[69,427,83.5,204,65.5,168]];
+F.forEach(f=>{const cx=f[0],cz=f[1],ax=f[2],bz=f[3],axi=f[4],bzi=f[5];
+const o=trackPts(cx,cz,ax,(bz-2*ax)/2),ii=trackPts(cx,cz,axi,(bzi-2*axi)/2);
 poly3(o.map(q=>proj(q[0],.4,q[1])),'#c96a5c');poly3(ii.map(q=>proj(q[0],.45,q[1])),'#5f9e46');});
 const ST=[[207,-478,70,4,3,1.2]];
 ST.forEach(f=>{const xe=f[0],cz=f[1],L=f[2],T=f[3],W=f[4],BH=f[5];
