@@ -233,13 +233,7 @@ def compute_details(polys):
     if waters:
         c = waters[0]["centroid"]
         add("pavilion", c[0], c[1], 18, 18, 10, "#8c6d55", "湖心亭")
-    lib = nearest_building(polys, -30, -339)
-    if lib is not None and math.dist(lib["centroid"], (-30, -339)) < 60:
-        xs = [q[0] for q in lib["points"]]
-        zc = lib["centroid"][1]
-        x0, x1 = min(xs) + 12, max(xs) - 12
-        add("tower", x0, zc, 16, 16, 40, "#d9dde0", "图书馆西塔")
-        add("tower", x1, zc, 16, 16, 40, "#b8cdd9", "图书馆东塔")
+    # 图书馆双塔已移除（2026-11-15：规划图无楼层标注、沙盘实拍无并排双塔，臆造项）
     # 树列由 data/trees.json 真实树位替代（2026-11-13）
     # 花带/跑道环已由地面贴图承载（2026-11-12），3D 实心盒视觉过大，移除
     add("rockery", -400, -200, 50, 30, 5, "#b9b5a9", "西门假山")
@@ -498,8 +492,7 @@ def build_parts(polys, details=None):
     parts.extend(stadium_geometry(274, -478.5, 65, 91.5, 47, 69.5))
     parts.extend(stadium_geometry(69, 427, 83.5, 102, 65.5, 84))
     # 北操场西看台（编号18）：跑道西缘向西逐级升高
-    parts.extend(stand_geometry(207, -478, 70, 4, 3.0, 1.2))
-    parts.extend(stand_geometry(-14.5, 427, 70, 4, 3.0, 1.2))
+    parts.extend(stand_geometry(207, -478, 70, 4, 3.0, 1.2))  # 仅北操场（图例18；南操场沙盘实拍无看台）
     return parts
 
 
@@ -1017,7 +1010,7 @@ const F=[[274,-478.5,65,91.5,47,69.5],[69,427,83.5,102,65.5,84]];
 F.forEach(f=>{const cx=f[0],cz=f[1],ax=f[2],bz=f[3],axi=f[4],bzi=f[5],o=[],ii=[];
 for(let i=0;i<24;i++){const a=Math.PI*2*i/24;o.push([cx+ax*Math.cos(a),cz+bz*Math.sin(a)]);ii.push([cx+axi*Math.cos(a),cz+bzi*Math.sin(a)]);}
 poly3(o.map(q=>proj(q[0],.4,q[1])),'#c96a5c');poly3(ii.map(q=>proj(q[0],.45,q[1])),'#5f9e46');});
-const ST=[[207,-478,70,4,3,1.2],[-14.5,427,70,4,3,1.2]];
+const ST=[[207,-478,70,4,3,1.2]];
 ST.forEach(f=>{const xe=f[0],cz=f[1],L=f[2],T=f[3],W=f[4],BH=f[5];
 for(let i=0;i<T;i++){const x1=xe-W*i,x0=x1-W,h=BH*(i+1);
 const a=[x0,h,cz-L/2],b=[x1,h,cz-L/2],c=[x1,h,cz+L/2],d=[x0,h,cz+L/2];
