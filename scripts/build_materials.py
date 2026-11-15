@@ -149,6 +149,26 @@ def load_ground():
     tgt = np.clip((lum / 238.0)[..., None] * np.array([171, 196, 142], float)[None, None, :],
                   0, 255).astype(np.uint8)
     small[paper] = tgt[paper]
+    # 编号红圈定点擦除（2026-11-14：23个红圈在保大去小后残留，用环带中值色填充）
+    CIRCLE_ERASE = ((931, 259), (1435, 316), (645, 466), (866, 602), (1197, 606),
+                    (609, 706), (1367, 751), (623, 877), (981, 912), (1352, 928),
+                    (444, 936), (1591, 957), (532, 1100), (967, 1130), (1345, 1203),
+                    (1318, 1385), (824, 1427), (1137, 1428), (519, 1479), (831, 1586),
+                    (748, 1765), (585, 1796), (1038, 1958))
+    for cx, cy in CIRCLE_ERASE:
+        x0, y0 = max(0, cx - 16), max(0, cy - 16)
+        x1, y1 = min(PLAN_W, cx + 16), min(PLAN_H, cy + 16)
+        ring = []
+        for dx in range(-30, 31, 5):
+            for dy in range(-30, 31, 5):
+                if abs(dx) <= 18 and abs(dy) <= 18:
+                    continue
+                xx, yy = cx + dx, cy + dy
+                if 0 <= xx < PLAN_W and 0 <= yy < PLAN_H:
+                    ring.append(small[yy, xx])
+        if ring:
+            small[y0:y1, x0:x1] = np.median(np.array(ring, np.uint8), axis=0).astype(np.uint8)
+
     ok, buf = cv2.imencode(".jpg", small, [int(cv2.IMWRITE_JPEG_QUALITY), 88])
     return buf.tobytes() if ok else b""
 
