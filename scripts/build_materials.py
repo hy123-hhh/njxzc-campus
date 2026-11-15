@@ -459,6 +459,26 @@ def build_parts(polys, details=None):
     # 立体操场：北/南（绿茵场实测 bbox，跑道环绕外圈）
     parts.extend(stadium_geometry(274, -478.5, 65, 91.5, 47, 69.5))
     parts.extend(stadium_geometry(69, 427, 83.5, 102, 65.5, 84))
+    # 北操场西看台（编号18）：跑道西缘向西逐级升高
+    parts.extend(stand_geometry(207, -478, 70, 4, 3.0, 1.2))
+    return parts
+
+
+def stand_geometry(cx_edge, cz_center, length, tiers=4, tier_w=3.0, base_h=1.2):
+    """阶梯看台：从场地边缘向西逐级升高（面向东侧场地）。"""
+    parts = []
+    for i in range(tiers):
+        x1 = cx_edge - tier_w * i
+        x0 = x1 - tier_w
+        h = base_h * (i + 1)
+        m = TMesh()
+        m.quad([(x0, h, cz_center - length / 2), (x1, h, cz_center - length / 2),
+                (x1, h, cz_center + length / 2), (x0, h, cz_center + length / 2)],
+               (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        m.quad([(x1, 0, cz_center - length / 2), (x1, 0, cz_center + length / 2),
+                (x1, h, cz_center + length / 2), (x1, h, cz_center - length / 2)],
+               (-1, 0, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        parts.append((m, "solid_d9dde0" if i % 2 == 0 else "solid_cfc9bb"))
     return parts
 
 
@@ -950,7 +970,13 @@ function drawFields(){if(!document.getElementById('ground').checked)return;
 const F=[[274,-478.5,65,91.5,47,69.5],[69,427,83.5,102,65.5,84]];
 F.forEach(f=>{const cx=f[0],cz=f[1],ax=f[2],bz=f[3],axi=f[4],bzi=f[5],o=[],ii=[];
 for(let i=0;i<24;i++){const a=Math.PI*2*i/24;o.push([cx+ax*Math.cos(a),cz+bz*Math.sin(a)]);ii.push([cx+axi*Math.cos(a),cz+bzi*Math.sin(a)]);}
-poly3(o.map(q=>proj(q[0],.4,q[1])),'#c96a5c');poly3(ii.map(q=>proj(q[0],.45,q[1])),'#5f9e46');});}
+poly3(o.map(q=>proj(q[0],.4,q[1])),'#c96a5c');poly3(ii.map(q=>proj(q[0],.45,q[1])),'#5f9e46');});
+const ST=[[207,-478,70,4,3,1.2]];
+ST.forEach(f=>{const xe=f[0],cz=f[1],L=f[2],T=f[3],W=f[4],BH=f[5];
+for(let i=0;i<T;i++){const x1=xe-W*i,x0=x1-W,h=BH*(i+1);
+const a=[x0,h,cz-L/2],b=[x1,h,cz-L/2],c=[x1,h,cz+L/2],d=[x0,h,cz+L/2];
+poly3([proj(a[0],a[1],a[2]),proj(b[0],b[1],b[2]),proj(c[0],c[1],c[2]),proj(d[0],d[1],d[2])],i%2?'#cfc9bb':'#d9dde0');
+poly3([proj(x1,0,cz-L/2),proj(x1,0,cz+L/2),proj(x1,h,cz+L/2),proj(x1,h,cz-L/2)],i%2?'#b5bcc4':'#c4cad2');}});}
 function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();drawFields();
 const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+p[0]+p[1],0)/r.p.length,f:()=>drawRec(r)}))
 .concat(TREES.map(t=>({s:t.x+t.z,f:()=>drawTree(t)}))).sort((a,b)=>a.s-b.s);

@@ -4,10 +4,10 @@
   "polygons": 156,
   "scene_details": 10,
   "trees": 1438,
-  "primitives": 4683,
-  "triangles": 79483,
+  "primitives": 4687,
+  "triangles": 79499,
   "ground_map": "refs/official_01_plan_d.jpg (1800x2395)",
-  "glb_bytes": 10875560,
-  "preview_bytes": 3546628,
+  "glb_bytes": 10879428,
+  "preview_bytes": 3547085,
   "note": "地面铺真实规划图（与轮廓同一坐标系）；建筑按徽派程序化上色（青砖墙纹理/小瓦顶纹理/马头墙黛瓦山墙）；坐标由图上 100m 比例尺定标"
 }
