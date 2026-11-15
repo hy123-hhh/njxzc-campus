@@ -65,6 +65,17 @@ def make_textures():
         cv2.line(roof_w, (x + 7, 0), (x + 7, S), (108, 166, 222), 1)
     out["roof_warm"] = roof_w
 
+    # 高层塔楼墙：浅灰底 + 横向楼板暗带（每 3.2m 一层）+ 竖向窗框
+    tw = np.full((S, S, 3), (200, 204, 210), np.uint8)
+    tw = (tw.astype(np.int16) + rng.normal(0, 3, (S, S, 1))).clip(0, 255).astype(np.uint8)
+    tw[70:186, :] = (108, 118, 132)
+    tw[70:186, :] = (tw[70:186, :].astype(np.int16) + rng.normal(0, 6, (186 - 70, S, 1))).clip(0, 255).astype(np.uint8)
+    for x in range(0, S, 52):
+        cv2.line(tw, (x, 70), (x, 186), (84, 94, 108), 3)
+    for y in (68, 186):
+        cv2.line(tw, (0, y), (S, y), (150, 156, 164), 2)
+    out["tower_wall"] = tw
+
     # 青砖粉墙：浅底 + 水平砖缝 + 错缝竖缝
     wall = np.full((S, S, 3), (208, 210, 208), np.uint8)
     wall = (wall.astype(np.int16) + rng.normal(0, 3, (S, S, 1))).clip(0, 255).astype(np.uint8)
@@ -421,14 +432,18 @@ def build_parts(polys, details=None):
         for t in tris:
             body.tri([(a, h, b) for a, b in t], (0, 1, 0),
                      [uv_top(a, b) for a, b in t])
+        wall_key = "tower_wall" if h >= 25 else "building"
         for i in range(len(pts)):
             a, b = pts[i], pts[(i + 1) % len(pts)]
             length = max(math.dist(a, b), 1.0)
+            if h >= 25:
+                uv = [(0, 0), (length / 2.8, 0), (length / 2.8, h / 3.2), (0, h / 3.2)]
+            else:
+                uv = [(0, 0), (length / 14, 0), (length / 14, h / 14), (0, h / 14)]
             body.quad([(a[0], 0, a[1]), (b[0], 0, b[1]),
                        (b[0], h, b[1]), (a[0], h, a[1])],
-                      (a[1] - b[1], 0, b[0] - a[0]),
-                      [(0, 0), (length / 14, 0), (length / 14, h / 14), (0, h / 14)])
-        parts.append((body, "building"))
+                      (a[1] - b[1], 0, b[0] - a[0]), uv)
+        parts.append((body, wall_key))
         roof = TMesh()
         try:
             inner = Polygon(pts).buffer(-2.6, join_style=2)
@@ -461,6 +476,7 @@ def build_parts(polys, details=None):
     parts.extend(stadium_geometry(69, 427, 83.5, 102, 65.5, 84))
     # 北操场西看台（编号18）：跑道西缘向西逐级升高
     parts.extend(stand_geometry(207, -478, 70, 4, 3.0, 1.2))
+    parts.extend(stand_geometry(-14.5, 427, 70, 4, 3.0, 1.2))
     return parts
 
 
@@ -704,7 +720,7 @@ def build_glb(parts, ground, textures=None):
         tex_objs.append({"sampler": 0, "source": len(imgs) - 1})
     tex_index_by_name = {}
     if textures:
-        for tname in ("wall", "roof", "roof_blue", "roof_warm"):
+        for tname in ("wall", "roof", "roof_blue", "roof_warm", "tower_wall"):
             if textures.get(tname):
                 imgs.append({"bufferView": add_view(textures[tname]),
                              "mimeType": "image/png", "name": tname})
@@ -735,6 +751,13 @@ def build_glb(parts, ground, textures=None):
                          "pbrMetallicRoughness": {"baseColorTexture": {"index": wall_tex_index},
                                                   "baseColorFactor": [1, 1, 1, 1],
                                                   "metallicFactor": 0.0, "roughnessFactor": 0.95}})
+        elif key == "building" and tex_index_by_name.get("tower_wall") is not None and False:
+            pass  # 占位（building 材质保持在下方分支）
+        elif key == "tower_wall" and tex_index_by_name.get("tower_wall") is not None:
+            mats.append({"name": key, "doubleSided": True,
+                         "pbrMetallicRoughness": {"baseColorTexture": {"index": tex_index_by_name["tower_wall"]},
+                                                  "baseColorFactor": [1, 1, 1, 1],
+                                                  "metallicFactor": 0.0, "roughnessFactor": 0.9}})
         elif key in ("roof", "roof_blue", "roof_warm") and tex_index_by_name.get(key) is not None:
             mats.append({"name": key, "doubleSided": True,
                          "pbrMetallicRoughness": {"baseColorTexture": {"index": tex_index_by_name[key]},
@@ -971,7 +994,7 @@ const F=[[274,-478.5,65,91.5,47,69.5],[69,427,83.5,102,65.5,84]];
 F.forEach(f=>{const cx=f[0],cz=f[1],ax=f[2],bz=f[3],axi=f[4],bzi=f[5],o=[],ii=[];
 for(let i=0;i<24;i++){const a=Math.PI*2*i/24;o.push([cx+ax*Math.cos(a),cz+bz*Math.sin(a)]);ii.push([cx+axi*Math.cos(a),cz+bzi*Math.sin(a)]);}
 poly3(o.map(q=>proj(q[0],.4,q[1])),'#c96a5c');poly3(ii.map(q=>proj(q[0],.45,q[1])),'#5f9e46');});
-const ST=[[207,-478,70,4,3,1.2]];
+const ST=[[207,-478,70,4,3,1.2],[-14.5,427,70,4,3,1.2]];
 ST.forEach(f=>{const xe=f[0],cz=f[1],L=f[2],T=f[3],W=f[4],BH=f[5];
 for(let i=0;i<T;i++){const x1=xe-W*i,x0=x1-W,h=BH*(i+1);
 const a=[x0,h,cz-L/2],b=[x1,h,cz-L/2],c=[x1,h,cz+L/2],d=[x0,h,cz+L/2];
@@ -989,8 +1012,9 @@ if(Math.abs(cx-312)<8&&Math.abs(cz+339)<8)h=42;
 poly3(p.map(q=>[q[0]+14,.02,q[1]+10]),'rgba(52,64,58,.12)');
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length];
 const lit=.72+.28*Math.abs(Math.cos(Math.atan2(v[1]-u[1],v[0]-u[0])+ang));
-poly3([[u[0],0,u[1]],[v[0],0,v[1]],[v[0],h,v[1]],[u[0],h,u[1]]],sh(BASE.building,lit));}
-poly3(p.map(q=>[q[0],h,q[1]]),sh(BASE.building,1.06));
+const wc=h>=25?'#9fb2c4':BASE.building;
+poly3([[u[0],0,u[1]],[v[0],0,v[1]],[v[0],h,v[1]],[u[0],h,u[1]]],sh(wc,lit));}
+poly3(p.map(q=>[q[0],h,q[1]]),sh(h>=25?'#9fb2c4':BASE.building,1.06));
 ctx.strokeStyle='rgba(30,38,46,.32)';ctx.lineWidth=.6;{const sp=p.map(q=>proj(q[0],h,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}
 const k=.12,rise=Math.min(2.6,Math.max(1.8,h*.15)),ip=p.map(q=>[cx+(q[0]-cx)*(1-k),cz+(q[1]-cz)*(1-k)]);
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length],c=ip[i],d=ip[(i+1)%ip.length];
