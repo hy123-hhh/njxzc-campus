@@ -173,21 +173,27 @@ def load_ground():
     return buf.tobytes() if ok else b""
 
 
-NAMED_BUILDINGS = {
+NAMED_BUILDINGS = [
     # 依据规划图编号图例（1-24）与红色编号圈实测定位（2026-11-14）
-    "图书馆": (-30, -339),
-    "工科楼": (-153, -406),
-    "文科楼": (-170, -270),
-    "教学实验楼": (34, -143),
-    "理科组团": (-220, 261),
-    "行政办公楼": (-203, -33),
-    "食堂": (259, -249),
-    "音乐楼": (-38, 212),
-    "美术楼": (-22, 132),
-    "行知组团": (167, 278),
-    "风雨操场": (-93, 317),
-    "综合科技楼": (382, 269),
-}
+    ("图书馆", (-30, -339)),
+    ("工科楼", (-153, -406)),
+    ("文科楼", (-170, -270)),
+    ("教学实验楼", (34, -143)),
+    ("理科组团", (-220, 261)),
+    ("行政办公楼", (-203, -33)),
+    ("食堂", (259, -249)),
+    ("音乐楼", (-38, 212)),
+    ("美术楼", (-22, 132)),
+    ("行知组团", (167, 278)),
+    ("风雨操场", (-93, 317)),
+    ("综合科技楼", (382, 269)),
+    # 宿舍区：编号14 学生宿舍×5（楼层只标有实测标注的）
+    ("学生宿舍(5F)", (169, -356)),
+    ("学生宿舍(14F)", (389, -136)),
+    ("学生宿舍", (232, -168)),
+    ("学生宿舍", (271, 5)),
+    ("学生宿舍", (162, 112)),
+]
 
 
 def nearest_building(polys, x, z):
@@ -198,11 +204,12 @@ def nearest_building(polys, x, z):
 def compute_labels(polys):
     """主要功能区中文标注（按规划图编号圈实测锚定，2026-11-14）。"""
     labels = []
-    for name, (x, z) in NAMED_BUILDINGS.items():
+    for name, (x, z) in NAMED_BUILDINGS:
         b = nearest_building(polys, x, z)
         if b is not None and math.dist(b["centroid"], (x, z)) < 60:
             c = b["centroid"]
             labels.append({"n": name, "x": c[0], "z": c[1]})
+    labels.append({"n": "学生宿舍区", "x": 230, "z": -120})
     waters = [p for p in polys if p["class"] == "water"]
     if waters:
         w = max(waters, key=lambda p: p.get("area_px", 0))
@@ -904,7 +911,8 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <div class="ctl" id="ctl3d" style="display:none">左右拖动旋转，上下平移，滚轮缩放　<button onclick="resetView()">重置视角</button>
 <label><input type="checkbox" id="ground" checked onchange="draw()"> 规划图地面</label>
 <label><input type="checkbox" id="label" checked onchange="draw()"> 标注</label>
-<label><input type="checkbox" id="tree" checked onchange="draw()"> 树木</label></div>
+<label><input type="checkbox" id="tree" checked onchange="draw()"> 树木</label>
+<button id="walkbtn" onclick="toggleWalk()">🚶 进入漫游</button></div>
 <div class="note">共 __COUNT__ 个真实轮廓。来源：学校发展规划处公开总平面规划图；实拍来自公开媒体转载，版权归原发布方。教学展示用途 · 示意性布局 · 非测绘成果。</div>
 <script>
 const DATA=__DATA__;
@@ -921,7 +929,42 @@ function baseScale(){return Math.min(cv.width/2100,cv.height/1120);}
 function sh(h,f){const s=h.replace('#','');return 'rgb('+[0,2,4].map(i=>Math.min(255,parseInt(s.slice(i,i+2),16)*f|0)).join(',')+')';}
 function proj(x,y,z){const c=Math.cos(ang),s=Math.sin(ang),rx=x*c-z*s,rz=x*s+z*c;
 return [cv.width/2+(rx-rz)*.866*sc+panX,cv.height/2+(rx+rz)*.5*sc-y*sc*1.45+panY];}
-function poly3(pts,fill,stroke){ctx.beginPath();pts.forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
+let walkMode=false,camX=-380,camZ=0,camH=1.6,camYaw=0,walkKeys={},walkFaces=[],lastWT=0,WCOL=[];
+function FOC(){return cv.height*1.1;}
+function camSpace(x,y,z){const dx=x-camX,dz=z-camZ,c=Math.cos(camYaw),s2=Math.sin(camYaw);
+return [-dx*s2+dz*c,dx*c+dz*s2,y-camH];}
+function clipNear(pts){const NEAR=.35,out=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
+const ain=a[1]>=NEAR,bin=b[1]>=NEAR;if(ain)out.push(a);
+if(ain!==bin){const t=(NEAR-a[1])/(b[1]-a[1]);out.push([a[0]+(b[0]-a[0])*t,NEAR,a[2]+(b[2]-a[2])*t]);}}return out;}
+function wproj(q){const F=FOC();return [cv.width/2+(q[0]/q[1])*F,cv.height/2-(q[2]/q[1])*F];}
+function wpoly(pts,fill,stroke){const cs=pts.map(p=>camSpace(p[0],p[1],p[2]));const cl=clipNear(cs);
+if(cl.length<3)return;const davg=cl.reduce((s2,q)=>s2+q[1],0)/cl.length;
+walkFaces.push({P:cl.map(q=>wproj(q)),d:davg,col:fill,st:stroke||null});}
+function camD(x,z){const dx=x-camX,dz=z-camZ;return dx*Math.cos(camYaw)+dz*Math.sin(camYaw);}
+function ptin(x,z,pts){let ins=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const xi=pts[i][0],zi=pts[i][1],xj=pts[j][0],zj=pts[j][1];
+if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi))ins=!ins;}return ins;}
+function blocked(nx,nz){if(Math.abs(nx)>500||Math.abs(nz)>655)return true;
+for(const p of WCOL){if(nx<p.bx0||nx>p.bx1||nz<p.bz0||nz>p.bz1)continue;
+if(ptin(nx,nz,p.p))return true;}return false;}
+function toggleWalk(){walkMode=!walkMode;
+if(walkMode){camX=-380;camZ=0;camYaw=0;camH=1.6;walkKeys={};
+WCOL=DATA.filter(r=>r.c==='building'||r.c==='water').map(r=>{const xs=r.p.map(q=>q[0]),zs=r.p.map(q=>q[1]);
+return{p:r.p,bx0:Math.min(...xs),bx1:Math.max(...xs),bz0:Math.min(...zs),bz1:Math.max(...zs)};});
+document.getElementById('walkbtn').textContent='🚪 退出漫游';
+lastWT=performance.now();draw();walkLoop();}
+else{document.getElementById('walkbtn').textContent='🚶 进入漫游';draw();}}
+function walkLoop(){if(!walkMode)return;
+const now=performance.now();const dt=Math.min(.1,(now-lastWT)/1000);lastWT=now;
+const mv=(walkKeys['w']||walkKeys['arrowup']?1:0)-(walkKeys['s']||walkKeys['arrowdown']?1:0);
+const st=(walkKeys['d']?1:0)-(walkKeys['a']?1:0);
+const tn=(walkKeys['q']||walkKeys['arrowleft']?1:0)-(walkKeys['e']||walkKeys['arrowright']?1:0);
+if(tn)camYaw+=tn*2.2*dt;
+if(mv||st){const c=Math.cos(camYaw),s2=Math.sin(camYaw);
+const vx=(c*mv-s2*st)*8*dt,vz=(s2*mv+c*st)*8*dt;
+const nx=camX+vx,nz=camZ+vz;
+if(!blocked(nx,nz)){camX=nx;camZ=nz;}else if(!blocked(camX+vx,camZ)){camX+=vx;}else if(!blocked(nx,camZ+vz)){camZ+=vz;}}
+draw();requestAnimationFrame(walkLoop);}
+function poly3(pts,fill,stroke){if(walkMode){wpoly(pts,fill,stroke);return;}ctx.beginPath();pts.forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
 ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke||'rgba(35,45,60,.25)';ctx.lineWidth=.5;ctx.stroke();}
 function area(p){let a=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return Math.abs(a)/2;}
 function height(a){return a>9000?21:(a>3500?18:(a>1200?15:11));}
@@ -956,7 +999,7 @@ ctx.fillStyle='#a9a79b';ctx.beginPath();front.forEach((q,i)=>i?ctx.lineTo(q[0],q
 ctx.fillStyle='#b6b4a8';ctx.beginPath();right.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.fill();}
 function drawGround(){if(!GIMG.complete||!GIMG.naturalWidth)return;const m=groundMatrix();
 ctx.save();ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);ctx.drawImage(GIMG,0,0);ctx.restore();ctx.setTransform(1,0,0,1,0,0);}
-function drawLabels(){if(!document.getElementById('label').checked)return;
+function drawLabels(){if(walkMode)return;if(!document.getElementById('label').checked)return;
 ctx.font='600 13px "Microsoft YaHei",sans-serif';ctx.textAlign='center';
 LABELS.forEach(L=>{const q=proj(L.x,8,L.z);const tw=ctx.measureText(L.n).width;
 ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(q[0]-tw/2-5,q[1]-16,tw+10,18);
@@ -1023,6 +1066,12 @@ ctx.closePath();ctx.fillStyle=BASE.maotou;ctx.fill();
 ctx.strokeStyle='rgba(18,22,26,.5)';ctx.lineWidth=.5;ctx.stroke();}}
 }
 function drawTree(t){const showT=document.getElementById('tree').checked;if(!showT)return;
+if(walkMode){const d=camD(t.x,t.z);if(d<.8||d>420)return;
+const q1=wproj(camSpace(t.x,1.1,t.z)),qc=wproj(camSpace(t.x,t.h*.82,t.z));
+const rr=Math.max(1.2,t.r*FOC()/d);
+ctx.strokeStyle='#6b4f3a';ctx.lineWidth=Math.max(1,t.r*FOC()/d*.12);
+ctx.beginPath();ctx.moveTo(q1[0],q1[1]);ctx.lineTo(qc[0],qc[1]);ctx.stroke();
+ctx.beginPath();ctx.arc(qc[0],qc[1],rr,0,7);ctx.fillStyle=(Math.floor(Math.abs(t.x*7+t.z*3))%8===7)?'#d9a441':TGREEN[Math.floor(Math.abs(t.x*7+t.z*3))%4];ctx.fill();return;}
 const q0=proj(t.x,0.4,t.z),q1=proj(t.x,t.h*.55,t.z),qc=proj(t.x,t.h*.78,t.z);
 ctx.strokeStyle='#6b4f3a';ctx.lineWidth=Math.max(1,t.r*sc*.35);
 ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke();
@@ -1046,7 +1095,9 @@ for(let i=0;i<T;i++){const x1=xe-W*i,x0=x1-W,h=BH*(i+1);
 const a=[x0,h,cz-L/2],b=[x1,h,cz-L/2],c=[x1,h,cz+L/2],d=[x0,h,cz+L/2];
 poly3([proj(a[0],a[1],a[2]),proj(b[0],b[1],b[2]),proj(c[0],c[1],c[2]),proj(d[0],d[1],d[2])],i%2?'#cfc9bb':'#d9dde0');
 poly3([proj(x1,0,cz-L/2),proj(x1,0,cz+L/2),proj(x1,h,cz+L/2),proj(x1,h,cz-L/2)],i%2?'#b5bcc4':'#c4cad2');}});}
-function draw3D(){sc=baseScale()*zoom;fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();drawFields();
+function draw3D(){sc=baseScale()*zoom;
+if(walkMode){drawWalk();return;}
+fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();drawFields();
 const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+p[0]+p[1],0)/r.p.length,f:()=>drawRec(r)}))
 .concat(TREES.map(t=>({s:t.x+t.z,f:()=>drawTree(t)}))).sort((a,b)=>a.s-b.s);
 order.forEach(o=>o.f());
@@ -1062,14 +1113,31 @@ const lit=.72+.28*Math.abs(Math.cos(Math.atan2(v[1]-u[1],v[0]-u[0])+ang));
 const wc=h>=25?'#9fb2c4':BASE.building;
 poly3([[u[0],0,u[1]],[v[0],0,v[1]],[v[0],h,v[1]],[u[0],h,u[1]]],sh(wc,lit));}
 poly3(p.map(q=>[q[0],h,q[1]]),sh(h>=25?'#9fb2c4':BASE.building,1.06));
-ctx.strokeStyle='rgba(30,38,46,.32)';ctx.lineWidth=.6;{const sp=p.map(q=>proj(q[0],h,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}
+if(!walkMode){ctx.strokeStyle='rgba(30,38,46,.32)';ctx.lineWidth=.6;{const sp=p.map(q=>proj(q[0],h,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}}
 const k=.12,rise=Math.min(2.6,Math.max(1.8,h*.15)),ip=p.map(q=>[cx+(q[0]-cx)*(1-k),cz+(q[1]-cz)*(1-k)]);
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length],c=ip[i],d=ip[(i+1)%ip.length];
 poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(rb,.82+.2*((i%3)/3)));}
 poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(rb,1.15));
-ctx.strokeStyle='rgba(20,26,30,.45)';ctx.lineWidth=.6;{const sp=ip.map(q=>proj(q[0],h+rise,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}
+if(!walkMode){ctx.strokeStyle='rgba(20,26,30,.45)';ctx.lineWidth=.6;{const sp=ip.map(q=>proj(q[0],h+rise,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}}
 drawMaotou(p,h);
 }
+    function drawWalk(){
+    walkFaces=[];
+    ctx.fillStyle='#a8c8e0';ctx.fillRect(0,0,cv.width,cv.height);
+    wpoly([[-520,0,-665],[520,0,-665],[520,0,665],[-520,0,665]],'#7fa85a');
+    if(document.getElementById('ground').checked){DATA.filter(r=>r.c==='water').forEach(r=>wpoly(r.p.map(q=>[q[0],0.14,q[1]]),'#6fa8cf'));}
+    DETAILS.forEach(d=>drawDetail(d));
+    DATA.filter(r=>r.c==='building').forEach(r=>drawRec(r));
+    walkFaces.sort((a,b)=>b.d-a.d);
+    walkFaces.forEach(f=>{ctx.beginPath();f.P.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f.col;ctx.fill();if(f.st){ctx.strokeStyle=f.st;ctx.lineWidth=.5;ctx.stroke();}});
+    if(document.getElementById('tree').checked){TREES.map(t=>({t:t,d:camD(t.x,t.z)})).filter(x=>x.d>.8&&x.d<420).sort((a,b)=>b.d-a.d).forEach(x=>drawTree(x.t));}
+    ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(10,cv.height-66,340,54);
+    ctx.fillStyle='#1f2328';ctx.font='12px "Microsoft YaHei",sans-serif';ctx.textAlign='left';
+    ctx.fillText('W/S 前进后退　A/D 左右移动　Q/E 或拖动转向',18,cv.height-48);
+    ctx.fillText('Esc 退出漫游　碰撞阻挡已开启',18,cv.height-28);
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.arc(cv.width/2,cv.height/2,3,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;ctx.stroke();}
+
 DETAILS.forEach(d=>drawDetail(d));
 drawLabels();
 }
@@ -1103,8 +1171,13 @@ function resetView(){ang=-.62;zoom=1;panX=0;panY=140;draw();}
 function setView(v){view=v;document.getElementById('ctl3d').style.display=v===3?'block':'none';draw();}
 cv.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.style.cursor='grabbing';});
 window.addEventListener('mouseup',()=>{drag=false;cv.style.cursor='grab';});
-window.addEventListener('mousemove',e=>{if(!drag)return;ang+=(e.clientX-lx)*.008;panY+=(e.clientY-ly)*.5;lx=e.clientX;ly=e.clientY;draw();});
-cv.addEventListener('wheel',e=>{e.preventDefault();zoom*=e.deltaY>0?.9:1.1;draw();},{passive:false});
+window.addEventListener('mousemove',e=>{if(walkMode){if(drag){camYaw+=(e.clientX-lx)*.006;draw();}lx=e.clientX;ly=e.clientY;return;}
+if(!drag)return;ang+=(e.clientX-lx)*.008;panY+=(e.clientY-ly)*.5;lx=e.clientX;ly=e.clientY;draw();});
+cv.addEventListener('wheel',e=>{if(walkMode)return;e.preventDefault();zoom*=e.deltaY>0?.9:1.1;draw();},{passive:false});
+window.addEventListener('keydown',e=>{if(!walkMode)return;const k=e.key.toLowerCase();walkKeys[k]=true;
+if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();
+if(k==='escape')toggleWalk();});
+window.addEventListener('keyup',e=>{walkKeys[e.key.toLowerCase()]=false;});
 draw();</script></body></html>'''
     all_pts = [q for p in polys for q in p["points"]]
     span = max(max(q[0] for q in all_pts) - min(q[0] for q in all_pts),
