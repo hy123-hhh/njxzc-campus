@@ -1286,13 +1286,12 @@ drawMaotou(p,h);
     if(!GIMG.complete||!GIMG.naturalWidth){ctx.fillStyle='#93ab83';ctx.fillRect(0,cv.height*.3,cv.width,cv.height);return;}
     const U=wx=>(wx+497.24)*1.81,V=wz=>(wz+661.05)*1.81;
     const tris=[];
-    const R=260,T=20;
+    const R=260,T=20,SUB=4; // 固定4x4剖分：世界坐标对齐，剖分不随相机变，纹理钉死不动
     const cx0=Math.max(-520,Math.floor((camX-R)/T)*T),cx1=Math.min(500,camX+R);
     const cz0=Math.max(-660,Math.floor((camZ-R)/T)*T),cz1=Math.min(640,camZ+R);
     for(let gx=cx0;gx<cx1;gx+=T)for(let gz=cz0;gz<cz1;gz+=T){
     const d=camD(gx+T/2,gz+T/2);if(d<0.6||d>R*1.6)continue;
-    // 依据深度自适应细分：近处切成最多 5x5
-    const sub=d<12?5:(d<30?3:(d<70?2:1));
+    const sub=SUB;
     const step=T/sub;
     for(let ax=0;ax<sub;ax++)for(let az=0;az<sub;az++){
     const x0=gx+ax*step,z0=gz+az*step,x1=x0+step,z1=z0+step;
@@ -1334,14 +1333,15 @@ function drawWalk(){
     ctx.drawImage(GIMG,mx,my,mw,mh);
     const px=mx+(camX+500)/1000*mw,py=my+(camZ+661)/1322*mh;
     // 视角箭头：尖端指向视线方向（随camYaw），尾翼展开
-    const AL=mapZoom?26:16,ax=Math.cos(camYaw),ay=Math.sin(camYaw);
-    const ex=px+ax*AL*(mw/1000),ey=py+ay*AL*(mh/1322);
-    const bx=px-ax*AL*.35*(mw/1000),by=py-ay*AL*.35*(mh/1322);
-    const wx=-ay*7*(mw/1000),wy=ax*7*(mh/1322);
-    ctx.fillStyle='rgba(224,60,49,.92)';ctx.beginPath();
-    ctx.moveTo(ex,ey);ctx.lineTo(bx+wx,by+wy);ctx.lineTo(bx-wx,by-wy);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px,py,mapZoom?6:4,0,7);ctx.fill();
-    ctx.strokeStyle='#e03c31';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,mapZoom?6:4,0,7);ctx.stroke();
+    const AL=mapZoom?80:52,ax=Math.cos(camYaw),ay=Math.sin(camYaw);
+    const qx=px+ax*10*(mw/1000),qy=py+ay*10*(mh/1322); // 箭尾从点外10m起，不与点重叠
+    const ex=qx+ax*AL*(mw/1000),ey=qy+ay*AL*(mh/1322);
+    const bx=qx-ax*AL*.15*(mw/1000),by=qy-ay*AL*.15*(mh/1322);
+    const wx=-ay*(mapZoom?18:14)*(mw/1000),wy=ax*(mapZoom?18:14)*(mh/1322);
+    ctx.lineWidth=mapZoom?3:2.5;ctx.strokeStyle='#7a1010';ctx.fillStyle='#ff2a1a';ctx.beginPath();
+    ctx.moveTo(ex,ey);ctx.lineTo(bx+wx,by+wy);ctx.lineTo(bx-wx,by-wy);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px,py,mapZoom?9:6,0,7);ctx.fill();
+    ctx.strokeStyle='#e03c31';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(px,py,mapZoom?9:6,0,7);ctx.stroke();
     ctx.strokeStyle='rgba(31,111,235,.65)';ctx.lineWidth=1;ctx.strokeRect(mx-6,my-30,mw+12,mh+12);
     ctx.fillStyle='#1f2328';ctx.font='600 13px "Microsoft YaHei",sans-serif';ctx.textAlign='left';
     ctx.fillText(mapZoom?'点击地图选择传送地点（点图外/Esc 取消）':'点击小地图放大并选择传送点',mx,my-10);}}
