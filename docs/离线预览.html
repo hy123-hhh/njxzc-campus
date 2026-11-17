@@ -88,7 +88,7 @@ const vx=(c*mv-s2*st)*16*dt,vz=(s2*mv+c*st)*16*dt;
 const nx=camX+vx,nz=camZ+vz;const hlim=blockedH(nx,nz,camH);
 if(!hlim){camX=nx;camZ=nz;}else if(!blockedH(camX+vx,camZ,camH)){camX+=vx;}else if(!blockedH(nx,camZ+vz,camH)){camZ+=vz;}}
 draw();requestAnimationFrame(walkLoop);}
-function poly3(pts,fill,stroke){if(walkMode){wpoly(pts,fill,stroke);return;}ctx.beginPath();pts.forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
+function poly3(pts,fill,stroke,bias){if(walkMode){wpoly(pts,fill,stroke,bias);return;}ctx.beginPath();pts.forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
 ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke||'rgba(35,45,60,.25)';ctx.lineWidth=.5;ctx.stroke();}
 function area(p){let a=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return Math.abs(a)/2;}
 function height(a){return a>9000?21:(a>3500?18:(a>1200?15:11));}
@@ -299,28 +299,35 @@ drawMaotou(p,h);
     g.beginPath();g.moveTo(0,k);g.lineTo(64,k);g.stroke();}
     GTILE=ctx.createPattern(c,'repeat');return GTILE;}
     function drawGroundWalk(){
-    // 近处：固定地砖（不随移动变形）；远处：规划图纹理（马路/草坪，透视误差小）
-    const pat=groundPattern();ctx.fillStyle=pat;
-    ctx.fillRect(0,cv.height*.42,cv.width,cv.height*.58);
-    if(!GIMG.complete||!GIMG.naturalWidth)return;
-    const T=16,U=wx=>(wx+497.24)*1.81,V=wz=>(wz+661.05)*1.81;
+    // 真·透视纹理：把每个世界地面格再细分为屏幕空间小三角，逐三角用局部仿射贴图
+    // 近处格细分更密 => 仿射误差可忽略 => 无条纹、纹理钉在世界坐标不随移动变
+    if(!GIMG.complete||!GIMG.naturalWidth){ctx.fillStyle='#93ab83';ctx.fillRect(0,cv.height*.3,cv.width,cv.height);return;}
+    const U=wx=>(wx+497.24)*1.81,V=wz=>(wz+661.05)*1.81;
     const tris=[];
-    const cx0=Math.max(-520,Math.floor((camX-260)/T)*T),cx1=Math.min(500,camX+260);
-    const cz0=Math.max(-660,Math.floor((camZ-260)/T)*T),cz1=Math.min(640,camZ+260);
+    const R=260,T=20;
+    const cx0=Math.max(-520,Math.floor((camX-R)/T)*T),cx1=Math.min(500,camX+R);
+    const cz0=Math.max(-660,Math.floor((camZ-R)/T)*T),cz1=Math.min(640,camZ+R);
     for(let gx=cx0;gx<cx1;gx+=T)for(let gz=cz0;gz<cz1;gz+=T){
-    const quads=[[[gx,gz],[gx+T,gz],[gx+T,gz+T]],[[gx,gz],[gx+T,gz+T],[gx,gz+T]]];
-    for(const q3 of quads){
-    const cs=q3.map(p=>camSpace(p[0],0,p[1]));
-    // 只画足够远的格子：近处仿射误差大会产生条纹
-    if(cs.some(q=>q[1]<14))continue;
+    const d=camD(gx+T/2,gz+T/2);if(d<0.6||d>R*1.6)continue;
+    // 依据深度自适应细分：近处切成最多 5x5
+    const sub=d<12?5:(d<30?3:(d<70?2:1));
+    const step=T/sub;
+    for(let ax=0;ax<sub;ax++)for(let az=0;az<sub;az++){
+    const x0=gx+ax*step,z0=gz+az*step,x1=x0+step,z1=z0+step;
+    const corners=[[x0,z0],[x1,z0],[x1,z1],[x0,z1]];
+    const cs=corners.map(p=>camSpace(p[0],0,p[1]));
+    if(cs.some(q=>q[1]<0.35))continue;
     const P=cs.map(q=>wproj(q));
     if(P.every(p=>p[0]<-100||p[0]>cv.width+100||p[1]<-100||p[1]>cv.height+100))continue;
-    const uv=q3.map(p=>[U(p[0]),V(p[1])]);
-    tris.push({P,uv,d:cs.reduce((s2,q)=>s2+q[1],0)/3});}}
+    const uv=corners.map(p=>[U(p[0]),V(p[1])]);
+    const dd=cs.reduce((s2,q)=>s2+q[1],0)/4;
+    tris.push({P,uv,d:dd});}}
     tris.sort((a,b)=>b.d-a.d);
-    tris.forEach(t=>{const m=solveAffine(t.uv,t.P);
+    tris.forEach(t=>{const m=solveAffine(t.uv.slice(0,3),t.P.slice(0,3));
     ctx.save();ctx.beginPath();t.P.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.clip();
     ctx.transform(m[0],m[1],m[2],m[3],m[4],m[5]);ctx.drawImage(GIMG,0,0);ctx.restore();});
+    // 脚下近处（相机前 0~4m）无贴图区域用纯色兜底
+    const gg=ctx.createLinearGradient(0,cv.height*.84,0,cv.height);gg.addColorStop(0,'rgba(147,171,131,0)');gg.addColorStop(1,'#93ab83');ctx.fillStyle=gg;ctx.fillRect(0,cv.height*.84,cv.width,cv.height*.16);
     }
 function drawWalk(){
     walkFaces=[];
@@ -344,9 +351,15 @@ function drawWalk(){
     ctx.fillStyle='rgba(255,255,255,.95)';ctx.fillRect(mx-6,my-30,mw+12,mh+12);
     ctx.drawImage(GIMG,mx,my,mw,mh);
     const px=mx+(camX+500)/1000*mw,py=my+(camZ+661)/1322*mh;
-    ctx.strokeStyle='#e03c31';ctx.lineWidth=mapZoom?3:2;ctx.beginPath();ctx.moveTo(px,py);
-    ctx.lineTo(px+Math.cos(camYaw)*16*(mw/1000),py+Math.sin(camYaw)*16*(mh/1322));ctx.stroke();
-    ctx.fillStyle='#e03c31';ctx.beginPath();ctx.arc(px,py,mapZoom?7:4.5,0,7);ctx.fill();
+    // 视角箭头：尖端指向视线方向（随camYaw），尾翼展开
+    const AL=mapZoom?26:16,ax=Math.cos(camYaw),ay=Math.sin(camYaw);
+    const ex=px+ax*AL*(mw/1000),ey=py+ay*AL*(mh/1322);
+    const bx=px-ax*AL*.35*(mw/1000),by=py-ay*AL*.35*(mh/1322);
+    const wx=-ay*7*(mw/1000),wy=ax*7*(mh/1322);
+    ctx.fillStyle='rgba(224,60,49,.92)';ctx.beginPath();
+    ctx.moveTo(ex,ey);ctx.lineTo(bx+wx,by+wy);ctx.lineTo(bx-wx,by-wy);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px,py,mapZoom?6:4,0,7);ctx.fill();
+    ctx.strokeStyle='#e03c31';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,mapZoom?6:4,0,7);ctx.stroke();
     ctx.strokeStyle='rgba(31,111,235,.65)';ctx.lineWidth=1;ctx.strokeRect(mx-6,my-30,mw+12,mh+12);
     ctx.fillStyle='#1f2328';ctx.font='600 13px "Microsoft YaHei",sans-serif';ctx.textAlign='left';
     ctx.fillText(mapZoom?'点击地图选择传送地点（点图外/Esc 取消）':'点击小地图放大并选择传送点',mx,my-10);}}
