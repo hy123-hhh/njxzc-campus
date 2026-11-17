@@ -500,6 +500,60 @@ def build_parts(polys, details=None):
     parts.extend(stadium_geometry(69, 427, 83.5, 204, 65.5, 168))
     # 北操场西看台（编号18）：跑道西缘向西逐级升高
     parts.extend(stand_geometry(207, -478, 70, 4, 3.0, 1.2))  # 仅北操场（图例18；南操场沙盘实拍无看台）
+    parts.extend(rooftop_unit(-93, 317, 5.0, 2.5, 18.0))
+    parts.extend(gate_geometry(-400, 0, 22.0, 9.0))
+    return parts
+
+
+def rooftop_unit(cx, cz, r=5.0, h=2.5, base_h=18.0):
+    """楼顶圆形设备（风雨操场白色平顶上的圆筒）。"""
+    seg = 14
+    m = TMesh()
+    for i in range(seg):
+        a0, a1 = 2 * math.pi * i / seg, 2 * math.pi * (i + 1) / seg
+        p0 = (cx + r * math.cos(a0), cz + r * math.sin(a0))
+        p1 = (cx + r * math.cos(a1), cz + r * math.sin(a1))
+        m.quad([(p0[0], base_h, p0[1]), (p1[0], base_h, p1[1]),
+                (p1[0], base_h + h, p1[1]), (p0[0], base_h + h, p0[1])],
+               (1, 0, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        m.quad([(cx, base_h + h, cz), (p0[0], base_h + h, p0[1]), (p1[0], base_h + h, p1[1])],
+               (0, 1, 0), [(.5, .5), (0, 0), (1, 0)])
+    return [(m, "solid_d8d3c6")]
+
+
+def gate_geometry(cx, cz, span=22.0, ph=9.0):
+    """牌楼：双柱 + 横梁（跨路门楼）。"""
+    parts = []
+    for dz in (-span / 2 + 1.5, span / 2 - 1.5):
+        m = TMesh()
+        for (p, q) in (((cx - 1.5, cz + dz - 1.5), (cx + 1.5, cz + dz - 1.5)),
+                       ((cx + 1.5, cz + dz - 1.5), (cx + 1.5, cz + dz + 1.5)),
+                       ((cx + 1.5, cz + dz + 1.5), (cx - 1.5, cz + dz + 1.5)),
+                       ((cx - 1.5, cz + dz + 1.5), (cx - 1.5, cz + dz - 1.5))):
+            m.quad([(p[0], 0, p[1]), (q[0], 0, q[1]),
+                    (q[0], ph, q[1]), (p[0], ph, p[1])],
+                   (q[1] - p[1], 0, p[0] - q[0]), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        m.quad([(cx - 1.5, ph, cz + dz - 1.5), (cx + 1.5, ph, cz + dz - 1.5),
+                (cx + 1.5, ph, cz + dz + 1.5), (cx - 1.5, ph, cz + dz + 1.5)],
+               (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+        parts.append((m, "solid_d9dde0"))
+    beam = TMesh()
+    beam.quad([(cx - span / 2 - 1, ph, cz - 1.5), (cx + span / 2 + 1, ph, cz - 1.5),
+               (cx + span / 2 + 1, ph + 1.8, cz - 1.5), (cx - span / 2 - 1, ph + 1.8, cz - 1.5)],
+              (0, 0, -1), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    beam.quad([(cx + span / 2 + 1, ph, cz + 1.5), (cx - span / 2 - 1, ph, cz + 1.5),
+               (cx - span / 2 - 1, ph + 1.8, cz + 1.5), (cx + span / 2 + 1, ph + 1.8, cz + 1.5)],
+              (0, 0, 1), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    beam.quad([(cx - span / 2 - 1, ph + 1.8, cz - 1.5), (cx + span / 2 + 1, ph + 1.8, cz - 1.5),
+               (cx + span / 2 + 1, ph + 1.8, cz + 1.5), (cx - span / 2 - 1, ph + 1.8, cz + 1.5)],
+              (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    beam.quad([(cx - span / 2 - 1, ph, cz - 1.5), (cx - span / 2 - 1, ph, cz + 1.5),
+               (cx - span / 2 - 1, ph + 1.8, cz + 1.5), (cx - span / 2 - 1, ph + 1.8, cz - 1.5)],
+              (-1, 0, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    beam.quad([(cx + span / 2 + 1, ph, cz - 1.5), (cx + span / 2 + 1, ph, cz + 1.5),
+               (cx + span / 2 + 1, ph + 1.8, cz + 1.5), (cx + span / 2 + 1, ph + 1.8, cz - 1.5)],
+              (1, 0, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    parts.append((beam, "solid_cfc9bb"))
     return parts
 
 
@@ -973,10 +1027,10 @@ if(d.t==='treeline'){const n=Math.max(6,Math.floor(d.d/45));
 for(let i=0;i<n;i++){const zz=d.z-d.d/2+d.d*(i+.5)/n,q=proj(d.x,d.h*.62,zz);
 ctx.beginPath();ctx.arc(q[0],q[1],4.6,0,7);ctx.fillStyle=d.c;ctx.fill();
 ctx.beginPath();ctx.arc(q[0],q[1]+5,1.8,0,7);ctx.fillStyle='#8a7256';ctx.fill();}return;}
-if(d.t==='track'){const x0=d.x-d.w/2,x1=d.x+d.w/2,z0=d.z-d.d/2,z1=d.z+d.d/2;
+if(d.t==='track'){if(walkMode)return;const x0=d.x-d.w/2,x1=d.x+d.w/2,z0=d.z-d.d/2,z1=d.z+d.d/2;
 ctx.beginPath();[[x0,.3,z0],[x1,.3,z0],[x1,.3,z1],[x0,.3,z1],[x0,.3,z0]].forEach((p,i)=>{const q=proj(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
 ctx.strokeStyle=d.c;ctx.lineWidth=3;ctx.stroke();return;}
-if(d.t==='statue'||d.t==='roundbed'||d.t==='pavilion'||d.t==='tower'){
+if(d.t==='statue'||d.t==='roundbed'||d.t==='pavilion'||d.t==='tower'){if(walkMode)return;
 const r=Math.min(d.w,d.d)/2,q0=proj(d.x,0,d.z),q1=proj(d.x,d.h,d.z),w=r*sc;
 ctx.beginPath();ctx.moveTo(q0[0]-w,q0[1]);ctx.lineTo(q0[0]+w,q0[1]);ctx.lineTo(q1[0]+w,q1[1]);ctx.lineTo(q1[0]-w,q1[1]);ctx.closePath();
 ctx.fillStyle=d.c;ctx.fill();ctx.strokeStyle='rgba(40,50,60,.35)';ctx.lineWidth=.6;ctx.stroke();
@@ -1024,6 +1078,8 @@ for(const q of p){const pu=(q[0]-cx)*ux+(q[1]-cz)*uz,pv=(q[0]-cx)*vx+(q[1]-cz)*v
 return {cx,cz,ux,uz,vx,vz,Lh,Wh};}
 function drawMaotou(p,h){
 const n=p.length;if(n<3)return;
+if(walkMode){for(let i=0;i<n;i++){const A=p[i],B=p[(i+1)%n];const L=Math.hypot(B[0]-A[0],B[1]-A[1]);if(L<2)continue;
+wpoly([[A[0],h,A[1]],[B[0],h,B[1]],[B[0],h+1.0,B[1]],[A[0],h+1.0,A[1]]],BASE.maotou);}return;}
 // 檐口黛瓦压顶：每条边一圈矮墙
 for(let i=0;i<n;i++){const A=p[i],B=p[(i+1)%n],dx=B[0]-A[0],dy=B[1]-A[1],L=Math.hypot(dx,dy);if(L<2)continue;
 const bot=[],top=[];
@@ -1078,6 +1134,16 @@ ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke();
 ctx.beginPath();ctx.arc(qc[0],qc[1],Math.max(1.5,t.r*sc*.85),0,7);
 const hs=Math.floor(Math.abs(t.x*7+t.z*3));ctx.fillStyle=(hs%8===7)?'#d9a441':TGREEN[hs%4];ctx.fill();
 ctx.strokeStyle='rgba(40,62,34,.35)';ctx.lineWidth=.5;ctx.stroke();}
+function box3(x0,y0,z0,x1,y1,z1,col){if(walkMode){
+wpoly([[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]],col);
+wpoly([[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],col);
+wpoly([[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]],col);
+wpoly([[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]],col);
+wpoly([[x1,y0,z1],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],col);
+wpoly([[x0,y0,z1],[x0,y0,z0],[x0,y1,z0],[x0,y1,z1]],col);return;}
+const P=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];
+const F=[[0,1,2,3],[7,6,5,4],[4,5,1,0],[6,7,3,2],[5,6,2,1],[4,0,3,7]];
+F.forEach(f=>poly3(f.map(i=>P[i]),col));}
 function drawFields(){if(!document.getElementById('ground').checked)return;
 function trackPts(cx,cz,ax,bs){const P=[],n=7;
 for(let k=0;k<=n;k++)P.push([cx+ax,cz-bs+2*bs*k/n]);
@@ -1135,8 +1201,15 @@ drawMaotou(p,h);
     ctx.fillStyle='#1f2328';ctx.font='12px "Microsoft YaHei",sans-serif';ctx.textAlign='left';
     ctx.fillText('W/S 前进后退　A/D 左右移动　Q/E 或拖动转向',18,cv.height-48);
     ctx.fillText('Esc 退出漫游　碰撞阻挡已开启',18,cv.height-28);
-    ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.arc(cv.width/2,cv.height/2,3,0,7);ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;ctx.stroke();}
+    ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(cv.width/2,cv.height/2,2.5,0,7);ctx.fill();
+    if(GIMG.complete&&GIMG.naturalWidth){const mw=180,mh=mw*2395/1800,mx=cv.width-mw-14,my=14;
+    ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(mx-4,my-4,mw+8,mh+8);
+    ctx.drawImage(GIMG,mx,my,mw,mh);
+    const px=mx+(camX+500)/1000*mw,py=my+(camZ+661)/1322*mh;
+    ctx.strokeStyle='#e03c31';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px,py);
+    ctx.lineTo(px+Math.cos(camYaw)*16*(mw/1000),py+Math.sin(camYaw)*16*(mh/1322));ctx.stroke();
+    ctx.fillStyle='#e03c31';ctx.beginPath();ctx.arc(px,py,4.5,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(31,111,235,.65)';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,mw+8,mh+8);}}
 
 DETAILS.forEach(d=>drawDetail(d));
 drawLabels();
