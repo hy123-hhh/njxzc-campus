@@ -190,46 +190,67 @@ def main():
                           "area_m2": round(ar / PX_PER_M ** 2), "npts": len(wpts)})
 
 
-    # ---- 教学实验楼区规整化（2026-11-21 固化）----
-    # R1 高清实证（_b025_fix/rect_final.png、angle_test2.png 可复核）：该区域两簇完全相同，
-    # 每簇 = 主楼(6F回字形,含东缘小方楼) + 翼楼；底部簇朝向 -9°、顶部簇 -33°（扇形布局）。
-    # refine 的白口袋算法会产出星形粘连轮廓(building_025)，此处整体替换为
-    # minAreaRect 规整矩形 + 圆形楼，云端重建后依然生效。
+    # ---- 教学实验楼区规整化 v3（2026-11-21 固化：空心回字形）----
+    # R1 高清实证（_b025_fix/ind_*.png、ring_overlay.png 可复核）：
+    # 两簇完全相同，每簇 = 主楼(6F,回字形环带+大中庭) + 翼楼(回字形环带+长条中庭)；
+    # 底部簇朝向 -9°、顶部簇 -33°（扇形布局）；用户明确要求：中间空心、四栋同形。
+    # 中庭实测：主楼 29x15m（两主楼取一致，main_top 首测吸入树影弃用）、翼楼 21x6m，均居中。
+    # 实现为每栋拆 4 段矩形带（上/下带全宽，左/右带补齐），中庭露空。
     WORK = 1800.0
 
-    TEACH_RECTS = [
-        # (id, cx, cy, rw, rh, ang_deg, floors)  —— 工作图(1800宽)像素坐标，实测值
-        ("building_025a", 960.5, 854.0, 71.5, 68.8, -32.9, 6),   # 顶部主楼 6F
-        ("building_025b", 907.6, 887.2, 62.5, 40.4, -33.0, None),  # 顶部翼楼
-        ("building_025c", 998.9, 959.6, 73.9, 69.0, -9.0, 6),    # 底部主楼 6F
-        ("building_025d", 939.7, 969.1, 63.4, 40.6, -8.9, None),   # 底部翼楼
-        ("building_025e", 1027.1, 889.3, 28.2, 23.2, -20.6, 2),  # 右上配楼 2F
+    RING_BUILDS = [
+        # (字母, cx, cy, rw, rh, ang_deg, 中庭cw, 中庭ch, 层数)  —— 工作图(1800宽)px 实测
+        ("a", 960.5, 854.0, 71.5, 68.8, -32.9, 52.5, 27.2, 6),   # 顶部主楼 6F
+        ("b", 907.6, 887.2, 62.5, 40.4, -33.0, 37.3, 10.6, None),  # 顶部翼楼
+        ("c", 998.9, 959.6, 73.9, 69.0, -9.0, 52.5, 27.2, 6),   # 底部主楼 6F
+        ("d", 939.7, 969.1, 63.4, 40.6, -8.9, 37.3, 10.6, None),   # 底部翼楼
     ]
-    TEACH_CIRCLE = ("building_025f", 994.9, 1049.2, 20.4, 2)   # 圆形楼 2F r=11.3m
+    TEACH_ANNEX = ("building_025e", 1027.1, 889.3, 28.2, 23.2, -20.6)  # 右上配楼 2F（实心）
+    TEACH_CIRCLE = ("building_025f", 994.9, 1049.2, 20.4)              # 圆形楼 2F（实心）
 
     teach = []
-    for bid, cx, cy, rw, rh, ang, _fl in TEACH_RECTS:
-        b = cv2.boxPoints(((cx, cy), (rw, rh), ang))
-        wpts = [[round(float(px - WORK_W / 2) / PX_PER_M, 2),
-                 round(float(py - PYC) / PX_PER_M, 2)] for px, py in b]
-        teach.append({"id": bid, "class": "building", "points": wpts,
-                      "centroid": [round(float(sum(q[0] for q in wpts) / 4), 1),
-                                   round(float(sum(q[1] for q in wpts) / 4), 1)],
-                      "area_px": round(float(abs(cv2.contourArea(b.reshape(-1, 1, 2)))), 1)})
-    bid_c, ccx, ccy, cr, _fl2 = TEACH_CIRCLE
-    angs = np.linspace(0, 2 * np.pi, 21)[:-1]
-    wpts = [[round(float(ccx + cr * math.cos(a) - WORK_W / 2) / PX_PER_M, 2),
-             round(float(ccy + cr * math.sin(a) - PYC) / PX_PER_M, 2)] for a in angs]
-    teach.append({"id": bid_c, "class": "building", "points": wpts,
-                  "centroid": [round((ccx - WORK_W / 2) / PX_PER_M, 1),
-                               round((ccy - PYC) / PX_PER_M, 1)],
-                  "area_px": round(3.14159 * cr * cr, 1)})
-    before_t = len(new_blds)
-    new_blds = [p for p in new_blds
-                if not str(p.get("id", "")).startswith("building_025")]
+    for letter, cx, cy, rw, rh, ang, cw, ch, _fl in RING_BUILDS:
+        a2, b2 = rw / 2.0, rh / 2.0
+        ac, bc = cw / 2.0, ch / 2.0
+        t = math.radians(ang)
+        Rm = np.array([[math.cos(t), -math.sin(t)], [math.sin(t), math.cos(t)]])
+        bands = [
+            [(-a2, -b2), (a2, -b2), (a2, -bc), (-a2, -bc)],
+            [(-a2, bc), (a2, bc), (a2, b2), (-a2, b2)],
+            [(-a2, -bc), (-ac, -bc), (-ac, bc), (-a2, bc)],
+            [(ac, -bc), (a2, -bc), (a2, bc), (ac, bc)],
+        ]
+        for k, bd in enumerate(bands, 1):
+            pts = (np.array(bd) @ Rm.T) + [cx, cy]
+            wpts = [[round(float((px - WORK_W / 2) / PX_PER_M), 2),
+                     round(float((py - PYC) / PX_PER_M), 2)] for px, py in pts]
+            teach.append({"id": f"building_025{letter}{k}", "class": "building",
+                          "points": wpts,
+                          "centroid": [round(float(np.mean([q[0] for q in wpts])), 1),
+                                       round(float(np.mean([q[1] for q in wpts])), 1)],
+                          "area_px": round(float(abs(cv2.contourArea(
+                              np.array(wpts, np.float32).reshape(-1, 1, 2)))), 1)})
+    bid_e, ecx, ecy, erw, erh, eang = TEACH_ANNEX
+    eb = cv2.boxPoints(((ecx, ecy), (erw, erh), eang))
+    wpts = [[round(float((px - WORK_W / 2) / PX_PER_M), 2),
+             round(float((py - PYC) / PX_PER_M), 2)] for px, py in eb]
+    teach.append({"id": bid_e, "class": "building", "points": wpts,
+                  "centroid": [round(float(np.mean([q[0] for q in wpts])), 1),
+                               round(float(np.mean([q[1] for q in wpts])), 1)],
+                  "area_px": round(float(abs(cv2.contourArea(eb.reshape(-1, 1, 2)))), 1)})
+    bid_c2, ccx, ccy, cr = TEACH_CIRCLE
+    angs = np.linspace(0, 2 * math.pi, 21)[:-1]
+    wpts = [[round(float((ccx + cr * math.cos(a2v) - WORK_W / 2) / PX_PER_M), 2),
+             round(float((ccy + cr * math.sin(a2v) - PYC) / PX_PER_M), 2)] for a2v in angs]
+    teach.append({"id": bid_c2, "class": "building", "points": wpts,
+                  "centroid": [round(float((ccx - WORK_W / 2) / PX_PER_M), 1),
+                               round(float((ccy - PYC) / PX_PER_M), 1)],
+                  "area_px": round(float(3.14159 * cr * cr), 1)})
+    n025_before = len([p for p in new_blds if str(p.get("id", "")).startswith("building_025")])
+    new_blds = [p for p in new_blds if not str(p.get("id", "")).startswith("building_025")]
     new_blds.extend(teach)
-    print("教学区规整化: 删除旧025系", before_t - len(new_blds) + len(teach),
-          "栋, 写入规整矩形", len(teach), "栋(两簇主楼6F+翼楼+配楼2F+圆楼2F)")
+    print("教学区规整化v3: 删旧025系", n025_before, "栋, 写入空心回字形",
+          len(RING_BUILDS), "栋x4段 + 配楼 + 圆楼 =", len(teach), "个多边形")
 
     json.dump({"class": "layout", "polygons": others + new_blds},
               open(OUTLINES, "w", encoding="utf-8"), ensure_ascii=False)
