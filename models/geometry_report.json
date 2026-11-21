@@ -1,13 +1,13 @@
 {
   "source": "refs/official_01_plan_d.jpg 逐像素轮廓提取",
   "accuracy": "形状与官方总平面图 1:1；坐标为线性映射示意值，非测绘成果",
-  "polygons": 161,
-  "primitives": 254,
-  "triangles": 6892,
-  "glb_bytes": 573688,
-  "preview_bytes": 2893835,
+  "polygons": 173,
+  "primitives": 278,
+  "triangles": 7132,
+  "glb_bytes": 600884,
+  "preview_bytes": 2895135,
   "by_class": {
-    "building": 94,
+    "building": 106,
     "water": 6,
     "green": 55,
     "road": 6
