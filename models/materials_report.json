@@ -3,11 +3,11 @@
   "source": "官方总平面图真实轮廓 + 真实规划图地面贴图 + 树符号位置",
   "polygons": 177,
   "scene_details": 8,
-  "trees": 1445,
-  "primitives": 5179,
-  "triangles": 80556,
+  "trees": 1444,
+  "primitives": 5177,
+  "triangles": 80526,
   "ground_map": "refs/official_01_plan_d.jpg (1800x2395)",
-  "glb_bytes": 11424068,
-  "preview_bytes": 3557844,
+  "glb_bytes": 11420296,
+  "preview_bytes": 3557795,
   "note": "地面铺真实规划图（与轮廓同一坐标系）；建筑按徽派程序化上色（青砖墙纹理/小瓦顶纹理/马头墙黛瓦山墙）；坐标由图上 100m 比例尺定标"
 }
