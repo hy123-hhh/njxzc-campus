@@ -479,7 +479,7 @@ def build_parts(polys, details=None):
             if not inner.is_empty and inner.geom_type == "Polygon":
                 ip = list(inner.exterior.coords)[:-1]
                 if len(ip) >= 3:
-                    rise = min(2.6, max(1.8, h * 0.15))
+                    rise = min(4.0, max(3.0, h * 0.18))
                     for t in triangulate(Polygon(ip)):
                         if Polygon(ip).contains(t.representative_point()):
                             c = list(t.exterior.coords)[:3]
@@ -1009,7 +1009,7 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <div class="pane"><h3>对标效果图（徽派写实渲染）</h3><img src="data:image/jpeg;base64,__REF__" alt="对标"></div>
 </div>
 <h2>校园地图与三维预览</h2>
-<div class="ctl"><button onclick="setView(2)">俯视地图</button> <button onclick="setView(3)">三维预览</button>
+<div class="ctl"><button onclick="setView(2)">俯视地图</button> <button onclick="setView(3)">三维预览</button> <button onclick="setView(4)">R2效果视角</button>
 <span id="hint">默认俯视图：真实规划图 + 楼栋填色 + 中文标注 + 100m 比例尺</span></div>
 <canvas id="cv" width="1400" height="920" style="width:100%;max-width:1400px"></canvas>
 <div class="ctl" id="ctl3d" style="display:none">左右拖动旋转，上下平移，滚轮缩放　<button onclick="resetView()">重置视角</button>
@@ -1278,10 +1278,17 @@ const wx1=dA[0]+(dB[0]-dA[0])*t1-ox*.18,wz1=dA[1]+(dB[1]-dA[1])*t1-oz*.18;
 poly3([[wx0,wy,wz0],[wx1,wy,wz1],[wx1,wy+1.1,wz1],[wx0,wy+1.1,wz0]],'rgba(86,107,125,.75)',null,.3);}}}}
 poly3(p.map(q=>[q[0],h,q[1]]),sh(rb,1.06));
 if(!walkMode){ctx.strokeStyle='rgba(30,38,46,.32)';ctx.lineWidth=.6;{const sp=p.map(q=>proj(q[0],h,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}}
-const k=.12,rise=Math.min(2.6,Math.max(1.8,h*.15)),ip=p.map(q=>[cx+(q[0]-cx)*(1-k),cz+(q[1]-cz)*(1-k)]);
+const k=.12,rise=Math.min(4.0,Math.max(3.0,h*.18)),ip=p.map(q=>[cx+(q[0]-cx)*(1-k),cz+(q[1]-cz)*(1-k)]);
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length],c=ip[i],d=ip[(i+1)%ip.length];
 poly3([[u[0],h,u[1]],[v[0],h,v[1]],[d[0],h+rise,d[1]],[c[0],h+rise,c[1]]],sh(rb,.82+.2*((i%3)/3)));}
-poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(rb,1.15));
+poly3(ip.map(q=>[q[0],h+rise,q[1]]),sh(rb,.68));
+// 屋脊线（R2效果图：坡顶有中脊；沿内缩轮廓最长方向）
+if(ip.length>2&&!walkMode){let bi=0,bd=0;
+  for(let i=0;i<ip.length;i++){const u=ip[i],v=ip[(i+1)%ip.length],d=Math.hypot(v[0]-u[0],v[1]-u[1]);if(d>bd){bd=d;bi=i;}}
+  const u=ip[bi],v=ip[(bi+1)%ip.length];
+  ctx.strokeStyle='rgba(18,24,30,.5)';ctx.lineWidth=1.4;ctx.beginPath();
+  const qa=proj((u[0]+v[0])/2,h+rise,(u[1]+v[1])/2),qb=proj(cx,h+rise,cz);
+  ctx.moveTo(qa[0],qa[1]);ctx.lineTo(qb[0],qb[1]);ctx.stroke();}
 if(!walkMode){ctx.strokeStyle='rgba(20,26,30,.45)';ctx.lineWidth=.6;{const sp=ip.map(q=>proj(q[0],h+rise,q[1]));ctx.beginPath();sp.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.stroke();}}
 drawMaotou(p,h);
 }
@@ -1394,7 +1401,9 @@ ctx.beginPath();ctx.moveTo(nx-5,ny-3);ctx.lineTo(nx,ny-12);ctx.lineTo(nx+5,ny-3)
 ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('N',nx,ny+26);}
 function draw(){if(view===2)draw2D();else draw3D();}
 function resetView(){ang=-.62;zoom=1;panX=0;panY=140;draw();}
-function setView(v){view=v;document.getElementById('ctl3d').style.display=v===3?'block':'none';draw();}
+function setView(v){view=v;document.getElementById('ctl3d').style.display=(v===3||v===4)?'block':'none';
+if(v===4){ang=-.72;zoom=1.85;panX=-60;panY=180;} // R2效果图式近景斜俯视
+draw();}
 cv.addEventListener('mousedown',e=>{const[mousemx,mousemy]=mouseXY(e),mx=mousemx,my=mousemy;
 if(walkMode){
 const mw=mapZoom?Math.min(680,cv.width-40):260,mh=mw*2395/1800;
