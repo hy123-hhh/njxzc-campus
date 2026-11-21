@@ -189,12 +189,12 @@ NAMED_BUILDINGS = [
     ("行知组团", (167, 278)),
     ("风雨操场", (-93, 317)),
     ("综合科技楼", (382, 269)),
-    # 宿舍区：编号14 学生宿舍×5（楼层只标有实测标注的）
-    ("学生宿舍(5F)", (169, -356)),
-    ("学生宿舍(14F)", (389, -136)),
-    ("学生宿舍", (232, -168)),
-    ("学生宿舍", (271, 5)),
-    ("学生宿舍", (162, 112)),
+    # 宿舍区：规划图14号圈×5片（2026-11-21实证认定；网上查得学校实为A-G七区，F/G为后期新楼）
+    ("A区·滋兰苑 7栋", (164, -327)),
+    ("B区·树蕙苑 6栋", (250, -149)),
+    ("C区·春华苑 3栋", (382, -133)),
+    ("D区·秋实苑 6栋", (246, 3)),
+    ("E区 10栋", (131, 127)),
 ]
 
 
@@ -211,7 +211,18 @@ def compute_labels(polys):
         if b is not None and math.dist(b["centroid"], (x, z)) < 60:
             c = b["centroid"]
             labels.append({"n": name, "x": c[0], "z": c[1]})
-    labels.append({"n": "学生宿舍区", "x": 230, "z": -120})
+    # 每栋宿舍楼编号标签（分区字母+序号；示意编号，非学校官方幢号）
+    DORM_ZONES = [
+        ("A", [(169,-356),(208,-333),(111,-324),(127,-292),(203,-300),(113,-355),(151,-386)]),
+        ("B", [(232,-168),(289,-140),(283,-167),(236,-106),(199,-138),(291,-108)]),
+        ("C", [(372,-137),(379,-107),(372,-164)]),
+        ("D", [(264,5),(209,-1),(280,-27),(272,36),(215,-33),(192,33)]),
+        ("E", [(160,109),(90,130),(167,141),(88,106),(162,82),(93,164),(164,176),(96,197),(76,70),(283,72)]),
+    ]
+    for zone_code, coords in DORM_ZONES:
+        for i, (dx, dz) in enumerate(coords, 1):
+            labels.append({"n": f"{zone_code}-{i}", "x": dx, "z": dz})
+
     waters = [p for p in polys if p["class"] == "water"]
     if waters:
         w = max(waters, key=lambda p: p.get("area_px", 0))
@@ -1118,11 +1129,16 @@ ctx.fillStyle='#b6b4a8';ctx.beginPath();right.forEach((q,i)=>i?ctx.lineTo(q[0],q
 function drawGround(){if(!GIMG.complete||!GIMG.naturalWidth)return;const m=groundMatrix();
 ctx.save();ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);ctx.drawImage(GIMG,0,0);ctx.restore();ctx.setTransform(1,0,0,1,0,0);}
 function drawLabels(){if(walkMode)return;if(!document.getElementById('label').checked)return;
-ctx.font='600 13px "Microsoft YaHei",sans-serif';ctx.textAlign='center';
-LABELS.forEach(L=>{const q=proj(L.x,8,L.z);const tw=ctx.measureText(L.n).width;
-ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(q[0]-tw/2-5,q[1]-16,tw+10,18);
-ctx.strokeStyle='rgba(31,111,235,.65)';ctx.lineWidth=1;ctx.strokeRect(q[0]-tw/2-5,q[1]-16,tw+10,18);
-ctx.fillStyle='#1f2328';ctx.fillText(L.n,q[0],q[1]-3);});}
+ctx.textAlign='center';const zoomed=zoom>1.6;
+LABELS.forEach(L=>{
+// 楼栋号（A-1式）只在放大后显示，避免鸟瞰时标签糊成一团
+if(/^[A-E]-\d+$/.test(L.n)&&!zoomed)return;
+const small=/^[A-E]-\d+$/.test(L.n);
+ctx.font=(small?'700 11px':'600 13px')+' "Microsoft YaHei",sans-serif';
+const q=proj(L.x,8,L.z);const tw=ctx.measureText(L.n).width;
+ctx.fillStyle=small?'rgba(255,255,255,.92)':'rgba(255,255,255,.88)';ctx.fillRect(q[0]-tw/2-4,q[1]-14,tw+8,17);
+ctx.strokeStyle=small?'rgba(224,60,49,.5)':'rgba(31,111,235,.65)';ctx.lineWidth=1;ctx.strokeRect(q[0]-tw/2-4,q[1]-14,tw+8,17);
+ctx.fillStyle=small?'#c0392b':'#1f2328';ctx.fillText(L.n,q[0],q[1]-2);});}
 function longEdges(p){
 let best=0,bA=p[0],bB=p[1];
 for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d>best){best=d;bA=a;bB=b;}}
