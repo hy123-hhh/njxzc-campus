@@ -252,6 +252,65 @@ def main():
     print("教学区规整化v3: 删旧025系", n025_before, "栋, 写入空心回字形",
           len(RING_BUILDS), "栋x4段 + 配楼 + 圆楼 =", len(teach), "个多边形")
 
+    # ---- 南群规整化（2026-11-21 固化：陶行知像东北两对主楼+翼楼，同空心回字形）----
+    # R1 高清实证（_b025_fix/south_ring_overlay2.png、grid_annex2.png 可复核）：
+    # 两对组合：翼楼n+主楼n 同朝向 29.1°，翼楼w+主楼s 同朝向 53.1°（扇形布局继续旋转）；
+    # 尺寸与教学区同款（翼楼35x21、主楼41x37、中庭 20x5 / 29x15）；2F配楼 18x13m。
+    # 替换该区域 5 个无 id 毛边多边形 + building_042（配楼区重复多边形）。
+    RING_BUILDS_S = [
+        # (字母, cx, cy, rw, rh, ang_deg, 中庭cw, 中庭ch, 中庭偏移dx, 中庭偏移dy, 层数)
+        ("g", 912.4, 1101.0, 63.5, 38.3, 29.1, 35.0, 9.5, 10.0, 0.4, None),   # 北翼楼
+        ("h", 965.7, 1134.1, 70.6, 66.6, 29.1, 50.7, 30.0, 6.4, -1.0, 6),     # 北主楼 6F
+        ("i", 855.3, 1166.3, 63.6, 36.4, 53.1, 35.0, 9.5, 10.0, 0.4, None),   # 西翼楼
+        ("j", 893.3, 1216.6, 74.0, 64.8, 53.1, 50.7, 30.0, 6.4, -1.0, 6),     # 南主楼 6F
+    ]
+    SOUTH_ANNEX = ("building_025k", 970.3, 1211.0, 32.0, 24.0, 41.9)  # 2F配楼（实心）
+    SOUTH_ZONE = (-28, 62, -50, 25)   # x0,x1,y0,y1：无id毛边多边形清除区
+
+    xz0, xz1, yz0, yz1 = SOUTH_ZONE
+
+    def _in_zone(p):
+        if p.get("id"):
+            return False
+        cxx, czz = p["centroid"][0], p["centroid"][1]
+        return xz0 <= cxx <= xz1 and yz0 <= czz <= yz1
+
+    n_south_before = len([p for p in new_blds if _in_zone(p)])
+    new_blds = [p for p in new_blds if not _in_zone(p)]
+    new_blds = [p for p in new_blds if p.get("id") != "building_042"]
+    for letter, cx, cy, rw, rh, ang, cw, ch, odx, ody, _fl in RING_BUILDS_S:
+        a2, b2 = rw / 2.0, rh / 2.0
+        ac, bc = cw / 2.0, ch / 2.0
+        t = math.radians(ang)
+        Rm = np.array([[math.cos(t), -math.sin(t)], [math.sin(t), math.cos(t)]])
+        bands = [
+            [(-a2, -b2), (a2, -b2), (a2, -bc), (-a2, -bc)],
+            [(-a2, bc), (a2, bc), (a2, b2), (-a2, b2)],
+            [(-a2, -bc), (-ac, -bc), (-ac, bc), (-a2, bc)],
+            [(ac, -bc), (a2, -bc), (a2, bc), (ac, bc)],
+        ]
+        for k, bd in enumerate(bands, 1):
+            pts = (np.array(bd) @ Rm.T) + [cx + odx, cy + ody]
+            wpts = [[round(float((px - WORK_W / 2) / PX_PER_M), 2),
+                     round(float((py - PYC) / PX_PER_M), 2)] for px, py in pts]
+            new_blds.append({"id": f"building_025{letter}{k}", "class": "building",
+                             "points": wpts,
+                             "centroid": [round(float(np.mean([q[0] for q in wpts])), 1),
+                                          round(float(np.mean([q[1] for q in wpts])), 1)],
+                             "area_px": round(float(abs(cv2.contourArea(
+                                 np.array(wpts, np.float32).reshape(-1, 1, 2)))), 1)})
+    bid_k, kcx, kcy, kw, kh, kang = SOUTH_ANNEX
+    kb = cv2.boxPoints(((kcx, kcy), (kw, kh), kang))
+    wpts = [[round(float((px - WORK_W / 2) / PX_PER_M), 2),
+             round(float((py - PYC) / PX_PER_M), 2)] for px, py in kb]
+    new_blds.append({"id": bid_k, "class": "building", "points": wpts,
+                     "centroid": [round(float(np.mean([q[0] for q in wpts])), 1),
+                                  round(float(np.mean([q[1] for q in wpts])), 1)],
+                     "area_px": round(float(abs(cv2.contourArea(kb.reshape(-1, 1, 2)))), 1)})
+    print("南群规整化: 清除无id毛边多边形", n_south_before, "个 + building_042, 写入环带",
+          len(RING_BUILDS_S), "栋x4段 + 配楼 =", len(RING_BUILDS_S) * 4 + 1, "个多边形")
+
+
     json.dump({"class": "layout", "polygons": others + new_blds},
               open(OUTLINES, "w", encoding="utf-8"), ensure_ascii=False)
     print("删除操场误楼:", len(removed))
