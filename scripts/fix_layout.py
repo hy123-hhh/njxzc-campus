@@ -310,6 +310,47 @@ def main():
     print("南群规整化: 清除无id毛边多边形", n_south_before, "个 + building_042, 写入环带",
           len(RING_BUILDS_S), "栋x4段 + 配楼 =", len(RING_BUILDS_S) * 4 + 1, "个多边形")
 
+    # ---- 全校误楼清除 + 西侧板楼规整化（2026-11-21 固化，audit_sheet1/2 对照核验）----
+    # 补缺步骤曾把树影花圃/农田/停车场/马路误识别为楼，逐格对照规划图确认后清除：
+    FALSE_BLD = [  # (世界cx, cz) 误楼质心，就近<12m 删除
+        (-143, -211),  # 花圃梯田
+        (-31, -256),   # 树木/花园
+        (232, -168),   # 铺装/花园
+        (394, -647),   # 马路
+        (-162, -166),  # 农田花圃
+        (283, 72),     # 树木/停车场
+        (-22, 52),     # 农田花圃
+        (-190, 283),   # 停车场/田径场边
+    ]
+    n_false = len([p for p in new_blds
+                   if any(abs(p["centroid"][0] - fx) < 12 and abs(p["centroid"][1] - fz) < 12
+                          for fx, fz in FALSE_BLD)])
+    new_blds = [p for p in new_blds
+                if not any(abs(p["centroid"][0] - fx) < 12 and abs(p["centroid"][1] - fz) < 12
+                           for fx, fz in FALSE_BLD)]
+    print("误楼清除:", n_false, "栋(花圃/树木/马路/停车场误识别)")
+
+    # 西侧两栋5F板楼（原无id毛边连体多边形，图上标5F）拆为两栋规整矩形
+    WEST_SLABS = [
+        ("building_025l1", 583.4, 1149.3, 57.6, 18.3, 21.3),   # 北板楼 5F
+        ("building_025l2", 568.0, 1184.2, 47.7, 19.8, 22.8),   # 南板楼 5F
+    ]
+    n_west_before = len([p for p in new_blds
+                         if abs(p["centroid"][0] - (-179)) < 15 and abs(p["centroid"][1] - (-16)) < 20])
+    new_blds = [p for p in new_blds
+                if not (abs(p["centroid"][0] - (-179)) < 15 and abs(p["centroid"][1] - (-16)) < 20
+                        and not p.get("id"))]
+    for bid, cx, cy, rw, rh, ang in WEST_SLABS:
+        b = cv2.boxPoints(((cx, cy), (rw, rh), ang))
+        wpts = [[round(float((px - WORK_W / 2) / PX_PER_M), 2),
+                 round(float((py - PYC) / PX_PER_M), 2)] for px, py in b]
+        new_blds.append({"id": bid, "class": "building", "points": wpts,
+                         "centroid": [round(float(np.mean([q[0] for q in wpts])), 1),
+                                      round(float(np.mean([q[1] for q in wpts])), 1)],
+                         "area_px": round(float(abs(cv2.contourArea(b.reshape(-1, 1, 2)))), 1)})
+    print("西侧板楼规整化: 清除毛边连体", n_west_before, "个, 写入2栋5F矩形(端翼并入主体近似)")
+
+
 
     json.dump({"class": "layout", "polygons": others + new_blds},
               open(OUTLINES, "w", encoding="utf-8"), ensure_ascii=False)

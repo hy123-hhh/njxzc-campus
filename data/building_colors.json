@@ -1,11 +1,11 @@
 {
  "source": "refs/official_01_plan_d.jpg 逐像素采样楼体内部中位色 2026-11-21",
  "note": "kind按R1实测：salmon=新建粉橙楼, white=保留白灰楼, other=橙黄等其他色",
- "count": 127,
+ "count": 129,
  "stats": {
   "salmon": 22,
   "other": 22,
-  "white": 83
+  "white": 85
  },
  "buildings": {
   "building_001": {
@@ -1647,6 +1647,32 @@
    ]
   },
   "building_025k": {
+   "kind": "white",
+   "bgr": [
+    224,
+    224,
+    242
+   ],
+   "rgb": [
+    242,
+    224,
+    224
+   ]
+  },
+  "building_025l1": {
+   "kind": "white",
+   "bgr": [
+    224,
+    224,
+    242
+   ],
+   "rgb": [
+    242,
+    224,
+    224
+   ]
+  },
+  "building_025l2": {
    "kind": "white",
    "bgr": [
     224,
