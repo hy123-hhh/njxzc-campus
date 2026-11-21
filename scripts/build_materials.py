@@ -980,6 +980,7 @@ def b64(path):
 
 def make_preview(polys, details, labels, ground, trees=None):
     data = [{"c": p["class"], "p": p["points"]} for p in polys]
+    cmap = json.load(open(os.path.join(ROOT, "data", "_build_color_map.json"), encoding="utf-8"))
     det = [{"t": d["t"], "x": d["x"], "z": d["z"], "w": d["w"],
             "d": d["d"], "h": d["h"], "c": d["c"], "n": d["n"]} for d in details]
     ground_b64 = base64.b64encode(ground).decode() if ground else ""
@@ -1019,6 +1020,7 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <div class="note">共 __COUNT__ 个真实轮廓。来源：学校发展规划处公开总平面规划图；实拍来自公开媒体转载，版权归原发布方。教学展示用途 · 示意性布局 · 非测绘成果。</div>
 <script>
 const DATA=__DATA__;
+const BCOL=__BCOL__; // R1规划图逐像素实测楼体颜色（data/building_colors.json）
 const DETAILS=__DETAILS__;
 const LABELS=__LABELS__;
 const GROUND=document.getElementById('planimg').src.split(',')[1];
@@ -1256,7 +1258,7 @@ let dA=null,dB=null,dBest=0;
 for(let i=0;i<p.length;i++){const u=p[i],v=p[(i+1)%p.length];
 const L=Math.hypot(v[0]-u[0],v[1]-u[1]);if(L>dBest){dBest=L;dA=u;dB=v;}
 const lit=.72+.28*Math.abs(Math.cos(Math.atan2(v[1]-u[1],v[0]-u[0])+ang));
-const wc=h>=25?'#9fb2c4':BASE.building;
+const wc=BCOL[fk]||(h>=25?'#9fb2c4':BASE.building);
 poly3([[u[0],0,u[1]],[v[0],0,v[1]],[v[0],h,v[1]],[u[0],h,u[1]]],sh(wc,lit));}
 if(walkMode){
 const ux=(dB[0]-dA[0])/dBest,uz=(dB[1]-dA[1])/dBest;
@@ -1429,6 +1431,7 @@ draw();</script></body></html>'''
                 .replace("__LABELS__", json.dumps(labels, ensure_ascii=False))
                 .replace("__DETAILS__", json.dumps(det, ensure_ascii=False))
                 .replace("__DATA__", json.dumps(data, ensure_ascii=False))
+                .replace("__BCOL__", json.dumps(cmap, ensure_ascii=False))
                 .replace("__TREES__", json.dumps(trees or [], ensure_ascii=False)))
     open(PREVIEW, "w", encoding="utf-8", newline="\n").write(html)
     return len(html.encode("utf-8"))
