@@ -30,9 +30,6 @@ concurrency:
 jobs:
   extract:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,11 +78,8 @@ jobs:
         with:
           path: '_site'
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
       - name: Commit generated geometry
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -96,3 +90,14 @@ jobs:
             git commit -m "feat: 按官方总平面图逐像素提取真实轮廓并挤出三维模型 [skip ci]"
             git push
           fi
+
+  deploy:
+    needs: extract
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
