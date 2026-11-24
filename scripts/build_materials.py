@@ -8,6 +8,8 @@
   docs/materials/*.png          纹理源文件
 """
 import base64
+import hashlib
+import re
 import json
 import math
 import os
@@ -420,6 +422,18 @@ def building_height(area):
     return 11.0
 
 
+def building_identity(poly):
+    """Return the footprint ID and its parent building ID for picking."""
+    footprint = poly.get("id")
+    if not footprint:
+        points = sorted(tuple(point) for point in poly["points"])
+        digest = hashlib.sha256(json.dumps(points).encode("utf-8")).hexdigest()[:16]
+        footprint = f"unverified_{digest}"
+    # The courtyard buildings are authored as four separate footprint strips.
+    match = re.fullmatch(r"(building_025[a-dg-j])[1-4]", footprint)
+    return footprint, match.group(1) if match else footprint
+
+
 def build_parts(polys, details=None):
     parts = []
     # 地基底板：把图纸地面“托”在一块实土色薄板上，避免建筑像悬空贴图
@@ -442,6 +456,7 @@ def build_parts(polys, details=None):
         tris = tris_of(pts)
         if not tris:
             continue
+        first_part = len(parts)
         area = abs(Polygon(pts).area)
         h = building_height(area)
         cx = sum(q[0] for q in pts) / len(pts)
@@ -507,6 +522,8 @@ def build_parts(polys, details=None):
             parts.append((roof, roof_key))
         for mm, mk in maotou_geometry(pts, h):
             parts.append((mm, mk))
+        for mesh, _ in parts[first_part:]:
+            mesh.building_identity = building_identity(p)
     # 每栋楼：大门（最长边中点）+ 入口台阶
     for p in polys:
         if p["class"] != "building":
@@ -551,6 +568,9 @@ def build_parts(polys, details=None):
                  (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
         parts.append((st1, "solid_cfc9bb"))
         parts.append((st2, "solid_d9dde0"))
+        identity = building_identity(p)
+        for mesh in (m, st1, st2):
+            mesh.building_identity = identity
     for item in (details or []):
         parts.extend(detail_geometry(item))
     # 立体操场：北/南（绿茵场实测 bbox，跑道环绕外圈）
@@ -938,6 +958,7 @@ def build_glb(parts, ground, textures=None):
                              "roughnessFactor": 0.5 if key == "water" else 0.9}})
         return idx
 
+    footprint_primitives = {}
     for mesh, key in parts:
         if not mesh.pos:
             continue
@@ -959,14 +980,23 @@ def build_glb(parts, ground, textures=None):
         accs.append({"bufferView": tv, "componentType": 5126, "count": len(mesh.uv), "type": "VEC2"})
         ia = len(accs)
         accs.append({"bufferView": iv, "componentType": 5123, "count": len(mesh.idx), "type": "SCALAR"})
-        prims.append({"attributes": {"POSITION": pa, "NORMAL": na, "TEXCOORD_0": ta},
+        identity = getattr(mesh, "building_identity", None)
+        group = footprint_primitives.setdefault(identity, []) if identity else prims
+        group.append({"attributes": {"POSITION": pa, "NORMAL": na, "TEXCOORD_0": ta},
                       "indices": ia, "material": mi, "mode": 4})
         tri_count += len(mesh.idx) // 3
 
+    meshes = [{"name": "campus_environment", "primitives": prims}]
+    nodes = [{"mesh": 0, "name": "校园环境"}]
+    for (footprint, building), primitives in footprint_primitives.items():
+        nodes.append({"mesh": len(meshes), "name": footprint,
+                      "extras": {"footprint_id": footprint, "building_id": building}})
+        meshes.append({"name": footprint, "primitives": primitives})
+
     gltf = {"asset": {"version": "2.0", "generator": "campus-groundmap-v1"},
-            "scene": 0, "scenes": [{"nodes": [0]}],
-            "nodes": [{"mesh": 0, "name": "方山校区 1:1 轮廓 + 真实规划图地面"}],
-            "meshes": [{"name": "campus_textured", "primitives": prims}],
+            "scene": 0, "scenes": [{"nodes": list(range(len(nodes)))}],
+            "nodes": nodes,
+            "meshes": meshes,
             "materials": mats, "textures": tex_objs,
             "samplers": [{"magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497}],
             "images": imgs,
@@ -980,7 +1010,7 @@ def build_glb(parts, ground, textures=None):
            + struct.pack("<I4s", len(j), b"JSON") + j
            + struct.pack("<I4s", len(b), b"BIN\x00") + b)
     open(GLB, "wb").write(glb)
-    return len(glb), tri_count, len(prims)
+    return len(glb), tri_count, sum(len(mesh["primitives"]) for mesh in meshes)
 
 
 def b64(path):

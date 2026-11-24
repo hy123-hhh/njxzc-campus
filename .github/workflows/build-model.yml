@@ -7,17 +7,13 @@ on:
     paths:
       - 'data/layout.csv'
       - 'scripts/build_layout.py'
-      - 'index.html'
-      - 'vendor/**'
       - '.github/workflows/build-model.yml'
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: campus-layout
   cancel-in-progress: false
 
 jobs:
@@ -49,15 +45,3 @@ jobs:
             git commit -m "chore: 云端生成布局级白模 [skip ci]"
             git push
           fi
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

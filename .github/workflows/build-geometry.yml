@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'vendor/**'
+      - 'data/layout.csv'
+      - 'refs/official_*'
       - 'scripts/extract_outlines.py'
       - 'scripts/refine_geometry.py'
       - 'scripts/build_geometry.py'
@@ -73,10 +77,20 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Assemble public preview
+        run: |
+          mkdir -p _site/{refs,docs,data,models}
+          cp index.html _site/
+          cp -r vendor _site/
+          cp refs/official_* _site/refs/
+          cp docs/离线预览.html docs/参考图核对页.html _site/docs/
+          cp data/layout.csv _site/data/
+          cp models/campus_textured.glb _site/models/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

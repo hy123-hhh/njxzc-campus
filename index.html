@@ -38,9 +38,8 @@
 <p class="sub">GitHub 仓库首页 · 参考图、布局数据、云端模型</p>
 
 <div class="status">
-<b>状态：</b>阶段 2/3。公开参考图已整理并经核对确认；仓库资料与云端建模管线已就位。<br>
-<b>模型由 GitHub Actions 在云端生成</b>，本地不运行渲染或构建；<code>models/</code> 在本地不含模型文件。<br>
-布局坐标按 R1 总平面图目测归一化，属<b>布局级示意，非测绘坐标</b>，可在 <code>data/layout.csv</code> 校准。
+贴图模型由云端按 R1 总平面图轮廓生成，供教学展示使用。<br>
+下方旧版布局清单保留作参考。模型坐标为示意值，不作导航或工程依据。
 </div>
 
 <h2>一、平面图与三维模型对照</h2>
@@ -51,9 +50,13 @@
     <p class="cap">来源：学校发展规划处。含比例尺、指北针、建筑编号图例、新建/保留建筑分色。<a href="refs/official_01_plan_d.jpg" target="_blank">查看高清版</a></p>
   </div>
   <div class="pane">
-    <h3>三维布局模型（云端生成）</h3>
-    <div id="viewer">正在检查模型文件…</div>
-    <p class="cap">模型文件 <code>models/campus_layout.glb</code> 由云端 workflow 生成；若尚未生成，此处显示占位。可拖动旋转、滚轮缩放。</p>
+    <h3>三维校园模型</h3>
+    <div id="viewer" aria-label="方山校区三维模型">正在加载模型…</div>
+    <p id="building-picker" hidden><label for="building-select">楼栋</label>
+      <select id="building-select"><option value="">未选中</option></select>
+    </p>
+    <p class="cap" id="building-status" role="status"></p>
+    <p class="cap">拖动旋转，滚轮或双指缩放。<a href="docs/离线预览.html">打开离线预览</a></p>
   </div>
 </div>
 
@@ -135,38 +138,128 @@
 </script>
 <script type="module">
 const host = document.getElementById('viewer');
-function placeholder(msg) {
-  host.innerHTML = '<div style="padding:20px">模型待云端生成<br><span style="font-size:12px">' + msg + '</span></div>';
-}
+
 try {
-  const res = await fetch('models/campus_layout.glb', { method: 'HEAD' });
-  if (!res.ok) { placeholder('models/campus_layout.glb 尚不存在，推送后由 GitHub Actions 生成'); }
-  else {
-    const THREE = await import('three');
-    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
-    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf6f8fa);
-    const camera = new THREE.PerspectiveCamera(45, host.clientWidth / 420, 1, 5000);
-    camera.position.set(620, 700, 820);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(host.clientWidth, 420);
-    host.innerHTML = '';
-    host.appendChild(renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.4);
-    sun.position.set(300, 700, 400);
-    scene.add(sun);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, 0);
-    new GLTFLoader().load('models/campus_layout.glb', function (gltf) {
-      scene.add(gltf.scene);
-      controls.update();
-    }, undefined, function () { placeholder('模型加载失败，请检查 GLB 文件'); });
-    (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+  const THREE = await import('three');
+  const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+  const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+  const gltf = await new GLTFLoader().loadAsync('models/campus_textured.glb');
+  const bounds = new THREE.Box3().setFromObject(gltf.scene);
+  if (bounds.isEmpty()) throw new Error('模型无可见几何');
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf6f8fa);
+  scene.add(gltf.scene, new THREE.AmbientLight(0xffffff, 1.5));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+  sun.position.set(300, 700, 400);
+  scene.add(sun);
+
+  const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+  const camera = new THREE.PerspectiveCamera(45, 1, 1, sphere.radius * 20);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  host.replaceChildren(renderer.domElement);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.copy(sphere.center);
+  const direction = new THREE.Vector3(0.62, 0.7, 0.82).normalize();
+
+  function render() {
+    renderer.render(scene, camera);
   }
-} catch (e) {
-  placeholder('在线 3D 组件未加载：' + (e && e.message ? e.message : '未知原因'));
+
+  function resize() {
+    const width = Math.max(1, host.clientWidth);
+    const height = Math.max(1, host.clientHeight);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+    render();
+  }
+
+  const halfVertical = THREE.MathUtils.degToRad(camera.fov / 2);
+  const halfHorizontal = Math.atan(Math.tan(halfVertical) * host.clientWidth / Math.max(1, host.clientHeight));
+  const distance = sphere.radius / Math.sin(Math.min(halfVertical, halfHorizontal));
+  camera.position.copy(sphere.center).addScaledVector(direction, distance * 1.05);
+  controls.update();
+  const buildings = new Map();
+  const pickable = [];
+  const buildingByMesh = new Map();
+  gltf.scene.traverse(node => {
+    const id = node.userData.building_id;
+    if (typeof id !== 'string' || !id) return;
+    if (!buildings.has(id)) buildings.set(id, []);
+    node.traverse(mesh => {
+      if (!mesh.isMesh) return;
+      buildings.get(id).push(mesh);
+      pickable.push(mesh);
+      buildingByMesh.set(mesh, id);
+    });
+  });
+
+  const status = document.getElementById('building-status');
+  if (pickable.length) {
+    const select = document.getElementById('building-select');
+    const highlight = new THREE.MeshBasicMaterial({ color: 0xf2ae37, side: THREE.DoubleSide });
+    const originals = new Map();
+    const label = id => id.startsWith('unverified_')
+      ? '待核实轮廓 ' + id.slice('unverified_'.length)
+      : id;
+    for (const id of [...buildings.keys()].sort()) {
+      select.add(new Option(label(id), id));
+    }
+    document.getElementById('building-picker').hidden = false;
+
+    function selectBuilding(id) {
+      for (const [mesh, material] of originals) mesh.material = material;
+      originals.clear();
+      for (const mesh of buildings.get(id) || []) {
+        originals.set(mesh, mesh.material);
+        mesh.material = highlight;
+      }
+      select.value = id;
+      status.textContent = id ? '已选中 ' + label(id) : '点击模型或从列表选择楼栋。';
+      render();
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const canvas = renderer.domElement;
+    let press = null;
+    canvas.addEventListener('pointerdown', event => {
+      press = event.isPrimary && event.button === 0
+        ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+        : null;
+    });
+    canvas.addEventListener('pointermove', event => {
+      if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 6) press = null;
+    });
+    canvas.addEventListener('pointercancel', () => { press = null; });
+    canvas.addEventListener('pointerup', event => {
+      const origin = press;
+      press = null;
+      if (!origin || origin.id !== event.pointerId ||
+          Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 6) return;
+      const rect = canvas.getBoundingClientRect();
+      pointer.set(
+        2 * (event.clientX - rect.left) / rect.width - 1,
+        1 - 2 * (event.clientY - rect.top) / rect.height
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const [hit] = raycaster.intersectObjects(pickable, false);
+      selectBuilding(hit ? buildingByMesh.get(hit.object) : '');
+    });
+    select.addEventListener('change', () => selectBuilding(select.value));
+    status.textContent = '点击模型或从列表选择楼栋。';
+  } else {
+    status.textContent = '当前模型版本支持浏览，楼栋点选随下次模型重建启用。';
+  }
+
+  controls.addEventListener('change', render);
+  new ResizeObserver(resize).observe(host);
+  resize();
+} catch (error) {
+  host.textContent = '三维模型加载失败。可使用下方的离线预览。';
+  console.error(error);
 }
 </script>
 
