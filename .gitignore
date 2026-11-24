@@ -13,3 +13,7 @@ refs/_*
 docs/_*
 docs/preview.html
 _verify_render.png
+
+# 舆情明细（仅内网，禁止进入公开仓库）
+data/spatial_alerts_raw.json
+data/spatial_view_internal.html

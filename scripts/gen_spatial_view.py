@@ -2,7 +2,11 @@
 """生成「校园空间态势」页：把舆情事件落到校园平面楼栋上（3D 校园 × 舆情系统融合）。
 
 输入：campus_repo/data/spatial_alerts.json（由 WSL 库导出：楼栋索引 + 各区域预警统计与明细）
-输出：campus_repo/docs/校园空间态势.html（自包含单文件，可离线打开）
+输出（双模式，2026-11-24 起）：
+  public  → docs/校园空间态势.html        【可公开】仅聚合计数与等级分布，不含任何正文/处置人
+  internal→ data/spatial_view_internal.html【仅内网】含明细，供校内演示与排查（已入 .gitignore）
+
+隐私边界：公开仓库只能出现聚合口径；一旦接入真实上报数据，明细一律只在内网版本出现。
 
 口径说明（页面内也会写明）：
   - 楼栋位置来自 3D 建模使用的官方总平面图提取结果；
@@ -10,15 +14,24 @@
   - 预警含仿真演练数据与公开热榜数据，比例见页面图例。
 """
 import json
+import sys
 from pathlib import Path
+
+# 模式：public=可公开（仅聚合，不含明细）｜ internal=仅内网（含明细）
+MODE = "internal" if "--internal" in sys.argv else "public"
 
 BASE = Path(__file__).resolve().parent.parent
 DATA = BASE / "data" / "spatial_alerts.json"
 OUT = BASE / "docs" / "校园空间态势.html"
+OUT_INTERNAL = BASE / "data" / "spatial_view_internal.html"
 
 d = json.load(open(DATA, encoding="utf-8"))
 buildings = d["buildings"]
 alerts = d["alerts_by_place"]
+if MODE == "internal":
+    raw_path = BASE / "data" / "spatial_alerts_raw.json"   # 内网导出（含明细，不入 git）
+    if raw_path.exists():
+        alerts = json.load(open(raw_path, encoding="utf-8"))["alerts_by_place"]
 
 LEVEL_COLOR = {"red": "#d1384a", "orange": "#e07b39", "yellow": "#d9a441", "none": "#9aa7b4"}
 LEVEL_NAME = {"red": "红色（危机）", "orange": "橙色（澄清）", "yellow": "黄色（观察）"}
@@ -51,6 +64,9 @@ for name, g in alerts.items():
                   "z": sum(b["z"] for b in hit) / len(hit),
                   "members": [b["name"] for b in hit], "level": lvl, **g})
 zones.sort(key=lambda z: -z["n"])
+if MODE == "public":
+    for z in zones:
+        z["items"] = []      # 公开版不含任何明细（正文/处置人）
 
 payload = {"zones": zones, "buildings": buildings, "regions": REGIONS,
            "total_located": d["total_located"], "generated_at": d.get("generated_at")}
@@ -222,6 +238,7 @@ if(DATA.zones.length){ sel=DATA.zones[0]; show(sel); draw(); }
 </html>
 """.replace("__PAYLOAD__", js)
 
-OUT.parent.mkdir(parents=True, exist_ok=True)
-OUT.write_text(html, encoding="utf-8", newline="\n")
-print(f"已生成 {OUT} （{len(html)//1024}KB，{len(zones)} 个热力区）")
+target = OUT if MODE == "public" else OUT_INTERNAL
+target.parent.mkdir(parents=True, exist_ok=True)
+target.write_text(html, encoding="utf-8", newline="\n")
+print(f"已生成 {target} （{len(html)//1024}KB，{len(zones)} 个热力区，模式={MODE}）")
