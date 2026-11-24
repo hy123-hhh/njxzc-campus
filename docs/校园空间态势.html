@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>校园空间态势 · 舆情claw</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Microsoft YaHei",sans-serif;background:#f5f7fa;color:#1e293b}
+header{background:#0f2a4a;color:#fff;padding:16px 24px}
+header h1{margin:0;font-size:19px;font-weight:800}
+header p{margin:6px 0 0;font-size:12.5px;color:#a8c4de}
+.wrap{display:grid;grid-template-columns:1fr 380px;gap:14px;padding:14px 18px 40px;max-width:1500px;margin:0 auto}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:9px 13px;min-width:118px}
+.kpi .k{font-size:11.5px;color:#64748b}
+.kpi .v{font-size:20px;font-weight:800;color:#0f2a4a;margin-top:2px}
+#cv{width:100%;height:640px;background:#eef3f8;border-radius:8px;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#475569;margin-top:10px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.items{max-height:560px;overflow:auto}
+.item{border:1px solid #e8edf3;border-radius:8px;padding:9px 11px;margin-bottom:8px;background:#fcfdff}
+.item .h{display:flex;gap:7px;align-items:center;font-size:12px;color:#64748b;margin-bottom:4px}
+.badge{border-radius:3px;padding:1px 7px;font-size:11px;font-weight:700;color:#fff}
+.badge.red{background:#d1384a}.badge.orange{background:#e07b39}.badge.yellow{background:#d9a441}
+.badge.closed{background:#0f766e}.badge.open{background:#94a3b8}
+.item .c{font-size:13px;line-height:1.65}
+.hint{font-size:12px;color:#64748b;line-height:1.85;margin-top:10px}
+h3.z{font-size:15px;margin:0 0 4px}
+.zmeta{font-size:12px;color:#64748b;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>校园空间态势 · 舆情claw</h1>
+  <p>舆情事件 × 校园空间关联视图（楼栋位置取自官方总平面图；舆情位置为文本线索推断的疑似发生地）</p>
+</header>
+<div class="wrap">
+  <div>
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <canvas id="cv"></canvas>
+      <div class="legend">
+        <span><i class="dot" style="background:#d1384a"></i>红色（危机级）</span>
+        <span><i class="dot" style="background:#e07b39"></i>橙色（澄清/处置级）</span>
+        <span><i class="dot" style="background:#d9a441"></i>黄色（观察级）</span>
+        <span><i class="dot" style="background:#cbd5e1"></i>其他楼栋（本期无归集舆情）</span>
+        <span style="color:#94a3b8">圆点大小＝该区域归集事件量</span>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px;border-left:4px solid #d9a441">
+      <div class="hint" id="caveat"></div>
+      <div class="hint" style="color:#b45309;font-weight:700;margin-top:8px">
+        ⚠ 位置口径：楼块位置取自布局白模轨道（<b>布局级示意坐标，非测绘成果</b>）；
+        与精细几何模型（官方总平面图逐像素提取）的逐栋对应尚待人工指认（见 docs/楼栋指认.html）。
+        本页用于展示系统的空间归属能力，不作为事件真实位置的认定依据。</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 class="z" id="zt">区域舆情明细</h3>
+    <div class="zmeta" id="zm">点击左侧热力点查看</div>
+    <div class="items" id="items"></div>
+  </div>
+</div>
+<script>
+const DATA = {"zones": [{"name": "生活区快递点", "x": 80.0, "z": 230.0, "members": ["南食堂", "大学生活动中心"], "level": "orange", "n": 50, "red": 0, "orange": 50, "yellow": 0, "closed": 37, "items": [{"id": 501, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:14:45", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 491, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:00:48", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 487, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:49:51", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 480, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:45:36", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 475, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:28:20", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 471, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:25:49", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 465, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:21:48", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}, {"id": 460, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:17:09", "content": "快递点排队两小时取个件，前面还有人插队吵起来了。", "handler": ""}]}, {"name": "学生宿舍区", "x": 27.142857142857142, "z": -199.28571428571428, "members": ["A区宿舍滋兰苑", "B区宿舍树蕙苑", "C区宿舍春华苑", "D区宿舍秋实苑", "E区宿舍", "F区宿舍", "G区宿舍"], "level": "orange", "n": 50, "red": 0, "orange": 50, "yellow": 0, "closed": 40, "items": [{"id": 490, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:00:34", "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。", "handler": ""}, {"id": 469, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:24:53", "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。", "handler": ""}, {"id": 458, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:16:16", "content": "宿舍楼停水第三天了，楼下全是排队打水的人，到底什么时候修？", "handler": ""}, {"id": 446, "level": "orange", "status": "closed", "created_at": "2026-11-23T10:20:09", "content": "宿舍楼停水第三天了，楼下全是排队打水的人，到底什么时候修？", "handler": "演练台账（系统补录）"}, {"id": 431, "level": "orange", "status": "closed", "created_at": "2026-11-21T19:00:04", "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。", "handler": "演练台账（系统补录）"}, {"id": 428, "level": "orange", "status": "pending", "created_at": "2026-11-21T18:56:53", "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。", "handler": ""}, {"id": 417, "level": "orange", "status": "closed", "created_at": "2026-11-21T18:46:11", "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。", "handler": "演练台账（系统补录）"}, {"id": 403, "level": "orange", "status": "pending", "created_at": "2026-11-18T17:31:27", "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。", "handler": ""}]}, {"name": "风雨操场", "x": -272.0, "z": 150.0, "members": ["风雨操场"], "level": "red", "n": 46, "red": 10, "orange": 36, "yellow": 0, "closed": 33, "items": [{"id": 496, "level": "red", "status": "pending", "created_at": "2026-11-24T16:03:44", "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。", "handler": ""}, {"id": 493, "level": "red", "status": "pending", "created_at": "2026-11-24T16:01:17", "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。", "handler": ""}, {"id": 452, "level": "red", "status": "pending", "created_at": "2026-11-23T11:10:05", "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。", "handler": ""}, {"id": 396, "level": "red", "status": "closed", "created_at": "2026-11-18T14:54:24", "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。", "handler": "演练台账（系统补录）"}, {"id": 365, "level": "red", "status": "closed", "created_at": "2026-11-10T19:16:38", "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。", "handler": "演练台账（系统补录）"}, {"id": 285, "level": "orange", "status": "closed", "created_at": "2026-10-27T17:56:01", "content": "球场晚上十点还大声放音响，去沟通还吵了一架，太气人了。", "handler": "演练台账（系统补录）"}, {"id": 280, "level": "orange", "status": "pending", "created_at": "2026-10-27T17:53:40", "content": "今天天气真好，去操场跑了两圈。", "handler": ""}, {"id": 270, "level": "orange", "status": "pending", "created_at": "2026-10-27T17:45:43", "content": "球场晚上十点还大声放音响，去沟通还吵了一架，太气人了。", "handler": ""}]}, {"name": "南食堂", "x": 95.0, "z": 235.0, "members": ["南食堂"], "level": "orange", "n": 46, "red": 0, "orange": 46, "yellow": 0, "closed": 34, "items": [{"id": 495, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:03:33", "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。", "handler": ""}, {"id": 486, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:49:50", "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。", "handler": ""}, {"id": 483, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:48:01", "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。", "handler": ""}, {"id": 479, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:44:16", "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。", "handler": ""}, {"id": 470, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:25:35", "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。", "handler": ""}, {"id": 468, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:24:42", "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。", "handler": ""}, {"id": 466, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:22:27", "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。", "handler": ""}, {"id": 464, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:21:36", "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。", "handler": ""}]}, {"name": "教学区", "x": -75.16666666666667, "z": 71.5, "members": ["行知楼", "元培楼", "叔愚楼", "鹤琴楼", "工科楼", "崇一楼文科组团"], "level": "orange", "n": 37, "red": 0, "orange": 37, "yellow": 0, "closed": 29, "items": [{"id": 500, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:14:27", "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。", "handler": ""}, {"id": 492, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:01:00", "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。", "handler": ""}, {"id": 485, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:49:50", "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。", "handler": ""}, {"id": 482, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:47:21", "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。", "handler": ""}, {"id": 481, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:46:31", "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。", "handler": ""}, {"id": 459, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:16:56", "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。", "handler": ""}, {"id": 453, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:11:31", "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。", "handler": ""}, {"id": 447, "level": "orange", "status": "closed", "created_at": "2026-11-23T10:20:21", "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。", "handler": "演练台账（系统补录）"}]}, {"name": "宿舍区浴室", "x": 27.142857142857142, "z": -199.28571428571428, "members": ["A区宿舍滋兰苑", "B区宿舍树蕙苑", "C区宿舍春华苑", "D区宿舍秋实苑", "E区宿舍", "F区宿舍", "G区宿舍"], "level": "orange", "n": 36, "red": 0, "orange": 36, "yellow": 0, "closed": 24, "items": [{"id": 502, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:14:45", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}, {"id": 499, "level": "orange", "status": "pending", "created_at": "2026-11-24T16:12:58", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}, {"id": 488, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:49:51", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}, {"id": 473, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:26:39", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}, {"id": 472, "level": "orange", "status": "pending", "created_at": "2026-11-23T11:26:01", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}, {"id": 445, "level": "orange", "status": "pending", "created_at": "2026-11-23T10:19:58", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}, {"id": 437, "level": "orange", "status": "closed", "created_at": "2026-11-21T19:48:42", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": "演练台账（系统补录）"}, {"id": 432, "level": "orange", "status": "pending", "created_at": "2026-11-21T19:00:17", "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。", "handler": ""}]}], "buildings": [{"name": "行知楼", "x": -155.0, "z": 25.0, "floors": 5, "detail": "tower+arcade"}, {"name": "元培楼", "x": -62.0, "z": 58.0, "floors": 5, "detail": "tower+arcade"}, {"name": "叔愚楼", "x": 32.0, "z": 62.0, "floors": 5, "detail": "tower+arcade"}, {"name": "鹤琴楼", "x": 122.0, "z": 38.0, "floors": 5, "detail": "tower+arcade"}, {"name": "中心报告厅", "x": -70.0, "z": 115.0, "floors": 2, "detail": "steps"}, {"name": "图书馆", "x": -235.0, "z": -30.0, "floors": 6, "detail": "skylight"}, {"name": "工科楼", "x": -238.0, "z": 88.0, "floors": 6, "detail": "glass"}, {"name": "崇一楼文科组团", "x": -150.0, "z": 158.0, "floors": 5, "detail": "none"}, {"name": "行政办公楼", "x": -45.0, "z": -215.0, "floors": 5, "detail": "colonnade"}, {"name": "理科组团", "x": 145.0, "z": -195.0, "floors": 5, "detail": "none"}, {"name": "综合科技楼", "x": 240.0, "z": -150.0, "floors": 6, "detail": "none"}, {"name": "国际交流中心", "x": -195.0, "z": -335.0, "floors": 6, "detail": "none"}, {"name": "北食堂", "x": -140.0, "z": -275.0, "floors": 3, "detail": "none"}, {"name": "南食堂", "x": 95.0, "z": 235.0, "floors": 3, "detail": "none"}, {"name": "大学生活动中心", "x": 65.0, "z": 225.0, "floors": 5, "detail": "none"}, {"name": "音乐楼", "x": -252.0, "z": 245.0, "floors": 4, "detail": "none"}, {"name": "美术楼", "x": -162.0, "z": 305.0, "floors": 4, "detail": "none"}, {"name": "风雨操场", "x": -272.0, "z": 150.0, "floors": 2, "detail": "none"}, {"name": "体育馆(人字坡顶)", "x": 218.0, "z": 22.0, "floors": 3, "detail": "glass"}, {"name": "体育馆(人字坡顶)", "x": 238.0, "z": 195.0, "floors": 3, "detail": "glass"}, {"name": "实训楼", "x": 250.0, "z": 290.0, "floors": 6, "detail": "none"}, {"name": "A区宿舍滋兰苑", "x": -240.0, "z": -235.0, "floors": 6, "detail": "none"}, {"name": "B区宿舍树蕙苑", "x": -240.0, "z": -180.0, "floors": 6, "detail": "none"}, {"name": "C区宿舍春华苑", "x": 110.0, "z": -270.0, "floors": 6, "detail": "none"}, {"name": "D区宿舍秋实苑", "x": 110.0, "z": -220.0, "floors": 6, "detail": "none"}, {"name": "E区宿舍", "x": -20.0, "z": -330.0, "floors": 6, "detail": "none"}, {"name": "F区宿舍", "x": 235.0, "z": -255.0, "floors": 6, "detail": "none"}, {"name": "G区宿舍", "x": 235.0, "z": 95.0, "floors": 6, "detail": "none"}], "regions": {"学生宿舍区": ["A区宿舍滋兰苑", "B区宿舍树蕙苑", "C区宿舍春华苑", "D区宿舍秋实苑", "E区宿舍", "F区宿舍", "G区宿舍"], "宿舍区浴室": ["A区宿舍滋兰苑", "B区宿舍树蕙苑", "C区宿舍春华苑", "D区宿舍秋实苑", "E区宿舍", "F区宿舍", "G区宿舍"], "生活区快递点": ["大学生活动中心", "南食堂"], "生活区超市": ["大学生活动中心", "南食堂"], "生活区一卡通": ["大学生活动中心", "南食堂"], "教学区": ["行知楼", "元培楼", "叔愚楼", "鹤琴楼", "崇一楼文科组团", "工科楼"], "教学区空调": ["行知楼", "元培楼", "叔愚楼", "鹤琴楼"], "风雨操场": ["风雨操场"], "体育馆": ["体育馆(人字坡顶)"]}, "total_located": 265, "generated_at": "2026-11-24"};
+const COL={red:"#d1384a",orange:"#e07b39",yellow:"#d9a441"};
+const NAME={red:"红色（危机）",orange:"橙色（澄清）",yellow:"黄色（观察）"};
+let sel=null;
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+function fit(){
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth, h=cv.clientHeight;
+  cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+function bounds(){
+  const xs=DATA.buildings.map(b=>b.x), zs=DATA.buildings.map(b=>b.z);
+  return {x0:Math.min(...xs)-60,x1:Math.max(...xs)+60,z0:Math.min(...zs)-60,z1:Math.max(...zs)+60};
+}
+function toPx(b,x,z){
+  const w=cv.clientWidth,h=cv.clientHeight;
+  const sx=w/(b.x1-b.x0), sz=h/(b.z1-b.z0), s=Math.min(sx,sz);
+  return [w/2+(x-(b.x0+b.x1)/2)*s, h/2+(z-(b.z0+b.z1)/2)*s];
+}
+function draw(){
+  const b=bounds(); ctx.clearRect(0,0,cv.clientWidth,cv.clientHeight);
+  // 道路/场地底纹（参考布局）
+  ctx.fillStyle="#e6ecf3"; ctx.fillRect(0,0,cv.clientWidth,cv.clientHeight);
+  // 楼栋（按所属区域着色：区域命中则用等级色，未命中用灰色）
+  const zoneOf={};
+  DATA.zones.forEach(z=>{ (z.members||[]).forEach(m=>{ zoneOf[m]=z; }); });
+  DATA.buildings.forEach(bd=>{
+    const [px,pz]=toPx(b,bd.x,bd.z);
+    const z=zoneOf[bd.name];
+    ctx.fillStyle=z?COL[z.level]:"#cbd5e1";
+    ctx.strokeStyle="#94a3b8"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.rect(px-13,pz-9,26,18); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#475569"; ctx.font="10px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(bd.name, px, pz+22);
+  });
+  // 热力点：画在该区域的每个成员楼上；数字徽标画在区域质心
+  DATA.zones.forEach(z=>{
+    const r=6+Math.min(14, Math.sqrt(z.n)*1.5);
+    (z.members||[]).forEach(m=>{
+      const bd=DATA.buildings.find(b=>b.name===m); if(!bd) return;
+      const [px,pz]=toPx(b,bd.x,bd.z);
+      ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2);
+      ctx.fillStyle=COL[z.level]+"99"; ctx.fill();
+      ctx.strokeStyle=COL[z.level]; ctx.lineWidth=1.5; ctx.stroke();
+    });
+    const [cx,cz]=toPx(b,z.x,z.z);
+    ctx.beginPath(); ctx.arc(cx,cz,11,0,Math.PI*2);
+    ctx.fillStyle=COL[z.level]; ctx.fill();
+    ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle="#fff"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(z.n, cx, cz+4);
+    if(sel&&sel.name===z.name){ ctx.strokeStyle="#0f2a4a"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cz,15,0,Math.PI*2); ctx.stroke(); }
+  });
+}
+cv.onclick=(ev)=>{
+  const rect=cv.getBoundingClientRect(); const mx=ev.clientX-rect.left, my=ev.clientY-rect.top;
+  const b=bounds(); let best=null,bd=1e9;
+  DATA.zones.forEach(z=>{
+    (z.members||[]).forEach(m=>{
+      const bb=DATA.buildings.find(x=>x.name===m); if(!bb) return;
+      const [px,pz]=toPx(b,bb.x,bb.z); const d=Math.hypot(px-mx,pz-my); if(d<bd){bd=d;best=z;}
+    });
+    const [px,pz]=toPx(b,z.x,z.z); const d=Math.hypot(px-mx,pz-my); if(d<bd){bd=d;best=z;}
+  });
+  if(best&&bd<40){ sel=best; show(best); draw(); }
+};
+function show(z){
+  document.getElementById("zt").textContent=z.name;
+  document.getElementById("zm").innerHTML=
+    `归集 <b>${z.n}</b> 条 ｜ 红 ${z.red} / 橙 ${z.orange} / 黄 ${z.yellow||0} ｜ 已闭环 <b>${z.closed}</b> 条 ｜ 最高等级 <span class="badge ${z.level}">${NAME[z.level]}</span>`;
+  document.getElementById("items").innerHTML=(z.items||[]).map(it=>
+    `<div class="item"><div class="h"><span class="badge ${it.level}">${NAME[it.level]||it.level}</span>
+     <span class="badge ${it.status==='closed'?'closed':'open'}">${it.status==='closed'?'已闭环':'处置中'}</span>
+     <span>#${it.id}</span><span>${(it.created_at||'').slice(5,16)}</span>
+     ${it.handler?`<span>处置：${it.handler}</span>`:''}</div>
+     <div class="c">${it.content}</div></div>`).join("")||'<div class="note">暂无明细</div>';
+}
+function kpis(){
+  const tot=DATA.total_located||0;
+  const red=DATA.zones.reduce((s,z)=>s+(z.red||0),0);
+  const closed=DATA.zones.reduce((s,z)=>s+(z.closed||0),0);
+  const covered=DATA.zones.length;
+  const items=[["已定位事件",tot+" 条"],["覆盖区域",covered+" 处"],["红色事件",red+" 条"],
+               ["区域闭环率",(closed/Math.max(tot,1)*100).toFixed(1)+"%"]];
+  document.getElementById("kpis").innerHTML=items.map(x=>
+    `<div class="kpi"><div class="k">${x[0]}</div><div class="v">${x[1]}</div></div>`).join("");
+  document.getElementById("caveat").innerHTML=
+    `<b>数据口径</b>：① 楼栋位置与名称取自 3D 建模所用的官方总平面图（30 个具名建筑/区域）；`
+    +`② 舆情位置由正文地点线索推断（浴室/宿舍/食堂/快递点/操场等），为<b>疑似发生地</b>，不作为责任认定依据，`
+    +`无可用线索的预警保持空值；③ 事件集合含仿真演练数据与公开热榜数据，真实按校名检索所得仅个位数，`
+    +`本页展示的是系统<b>空间归属能力</b>而非真实舆情规模；④ 处置闭环为演练口径（handler 标注为「演练台账（系统补录）」）。`;
+}
+kpis(); fit(); window.addEventListener("resize",fit);
+if(DATA.zones.length){ sel=DATA.zones[0]; show(sel); draw(); }
+</script>
+</body>
+</html>

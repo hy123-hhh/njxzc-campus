@@ -1,0 +1,204 @@
+{
+ "count": 28,
+ "buildings": [
+  {
+   "name": "行知楼",
+   "x": -155.0,
+   "z": 25.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "元培楼",
+   "x": -62.0,
+   "z": 58.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "叔愚楼",
+   "x": 32.0,
+   "z": 62.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "鹤琴楼",
+   "x": 122.0,
+   "z": 38.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "中心报告厅",
+   "x": -70.0,
+   "z": 115.0,
+   "floors": 2,
+   "detail": "steps"
+  },
+  {
+   "name": "图书馆",
+   "x": -235.0,
+   "z": -30.0,
+   "floors": 6,
+   "detail": "skylight"
+  },
+  {
+   "name": "工科楼",
+   "x": -238.0,
+   "z": 88.0,
+   "floors": 6,
+   "detail": "glass"
+  },
+  {
+   "name": "崇一楼文科组团",
+   "x": -150.0,
+   "z": 158.0,
+   "floors": 5,
+   "detail": "none"
+  },
+  {
+   "name": "行政办公楼",
+   "x": -45.0,
+   "z": -215.0,
+   "floors": 5,
+   "detail": "colonnade"
+  },
+  {
+   "name": "理科组团",
+   "x": 145.0,
+   "z": -195.0,
+   "floors": 5,
+   "detail": "none"
+  },
+  {
+   "name": "综合科技楼",
+   "x": 240.0,
+   "z": -150.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "国际交流中心",
+   "x": -195.0,
+   "z": -335.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "北食堂",
+   "x": -140.0,
+   "z": -275.0,
+   "floors": 3,
+   "detail": "none"
+  },
+  {
+   "name": "南食堂",
+   "x": 95.0,
+   "z": 235.0,
+   "floors": 3,
+   "detail": "none"
+  },
+  {
+   "name": "大学生活动中心",
+   "x": 65.0,
+   "z": 225.0,
+   "floors": 5,
+   "detail": "none"
+  },
+  {
+   "name": "音乐楼",
+   "x": -252.0,
+   "z": 245.0,
+   "floors": 4,
+   "detail": "none"
+  },
+  {
+   "name": "美术楼",
+   "x": -162.0,
+   "z": 305.0,
+   "floors": 4,
+   "detail": "none"
+  },
+  {
+   "name": "风雨操场",
+   "x": -272.0,
+   "z": 150.0,
+   "floors": 2,
+   "detail": "none"
+  },
+  {
+   "name": "体育馆(人字坡顶)",
+   "x": 218.0,
+   "z": 22.0,
+   "floors": 3,
+   "detail": "glass"
+  },
+  {
+   "name": "体育馆(人字坡顶)",
+   "x": 238.0,
+   "z": 195.0,
+   "floors": 3,
+   "detail": "glass"
+  },
+  {
+   "name": "实训楼",
+   "x": 250.0,
+   "z": 290.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "A区宿舍滋兰苑",
+   "x": -240.0,
+   "z": -235.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "B区宿舍树蕙苑",
+   "x": -240.0,
+   "z": -180.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "C区宿舍春华苑",
+   "x": 110.0,
+   "z": -270.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "D区宿舍秋实苑",
+   "x": 110.0,
+   "z": -220.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "E区宿舍",
+   "x": -20.0,
+   "z": -330.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "F区宿舍",
+   "x": 235.0,
+   "z": -255.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "G区宿舍",
+   "x": 235.0,
+   "z": 95.0,
+   "floors": 6,
+   "detail": "none"
+  }
+ ],
+ "source": "C:\\Users\\86187\\WorkBuddy\\2026-09-19-21-00-08\\campus_repo\\data\\layout.csv",
+ "track_note": "本数据绑定在「布局白模」轨道（data/layout.csv）：楼栋中文名可靠，但坐标为布局级示意、非测绘成果；与精细几何轨道（官方总平面图逐像素提取）的逐栋对应需人工指认一次（docs/楼栋指认.html → data/name_id_map.json）",
+ "position_caveat": "舆情位置为正文文本线索推断的疑似发生地，不作责任认定依据"
+}

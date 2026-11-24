@@ -1,0 +1,696 @@
+{
+ "generated_at": "2026-11-24",
+ "buildings": [
+  {
+   "name": "行知楼",
+   "x": -155.0,
+   "z": 25.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "元培楼",
+   "x": -62.0,
+   "z": 58.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "叔愚楼",
+   "x": 32.0,
+   "z": 62.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "鹤琴楼",
+   "x": 122.0,
+   "z": 38.0,
+   "floors": 5,
+   "detail": "tower+arcade"
+  },
+  {
+   "name": "中心报告厅",
+   "x": -70.0,
+   "z": 115.0,
+   "floors": 2,
+   "detail": "steps"
+  },
+  {
+   "name": "图书馆",
+   "x": -235.0,
+   "z": -30.0,
+   "floors": 6,
+   "detail": "skylight"
+  },
+  {
+   "name": "工科楼",
+   "x": -238.0,
+   "z": 88.0,
+   "floors": 6,
+   "detail": "glass"
+  },
+  {
+   "name": "崇一楼文科组团",
+   "x": -150.0,
+   "z": 158.0,
+   "floors": 5,
+   "detail": "none"
+  },
+  {
+   "name": "行政办公楼",
+   "x": -45.0,
+   "z": -215.0,
+   "floors": 5,
+   "detail": "colonnade"
+  },
+  {
+   "name": "理科组团",
+   "x": 145.0,
+   "z": -195.0,
+   "floors": 5,
+   "detail": "none"
+  },
+  {
+   "name": "综合科技楼",
+   "x": 240.0,
+   "z": -150.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "国际交流中心",
+   "x": -195.0,
+   "z": -335.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "北食堂",
+   "x": -140.0,
+   "z": -275.0,
+   "floors": 3,
+   "detail": "none"
+  },
+  {
+   "name": "南食堂",
+   "x": 95.0,
+   "z": 235.0,
+   "floors": 3,
+   "detail": "none"
+  },
+  {
+   "name": "大学生活动中心",
+   "x": 65.0,
+   "z": 225.0,
+   "floors": 5,
+   "detail": "none"
+  },
+  {
+   "name": "音乐楼",
+   "x": -252.0,
+   "z": 245.0,
+   "floors": 4,
+   "detail": "none"
+  },
+  {
+   "name": "美术楼",
+   "x": -162.0,
+   "z": 305.0,
+   "floors": 4,
+   "detail": "none"
+  },
+  {
+   "name": "风雨操场",
+   "x": -272.0,
+   "z": 150.0,
+   "floors": 2,
+   "detail": "none"
+  },
+  {
+   "name": "体育馆(人字坡顶)",
+   "x": 218.0,
+   "z": 22.0,
+   "floors": 3,
+   "detail": "glass"
+  },
+  {
+   "name": "体育馆(人字坡顶)",
+   "x": 238.0,
+   "z": 195.0,
+   "floors": 3,
+   "detail": "glass"
+  },
+  {
+   "name": "实训楼",
+   "x": 250.0,
+   "z": 290.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "A区宿舍滋兰苑",
+   "x": -240.0,
+   "z": -235.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "B区宿舍树蕙苑",
+   "x": -240.0,
+   "z": -180.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "C区宿舍春华苑",
+   "x": 110.0,
+   "z": -270.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "D区宿舍秋实苑",
+   "x": 110.0,
+   "z": -220.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "E区宿舍",
+   "x": -20.0,
+   "z": -330.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "F区宿舍",
+   "x": 235.0,
+   "z": -255.0,
+   "floors": 6,
+   "detail": "none"
+  },
+  {
+   "name": "G区宿舍",
+   "x": 235.0,
+   "z": 95.0,
+   "floors": 6,
+   "detail": "none"
+  }
+ ],
+ "regions": {
+  "学生宿舍区": [
+   "A区宿舍滋兰苑",
+   "B区宿舍树蕙苑",
+   "C区宿舍春华苑",
+   "D区宿舍秋实苑",
+   "E区宿舍",
+   "F区宿舍",
+   "G区宿舍"
+  ],
+  "宿舍区浴室": [
+   "A区宿舍滋兰苑",
+   "B区宿舍树蕙苑",
+   "C区宿舍春华苑",
+   "D区宿舍秋实苑",
+   "E区宿舍",
+   "F区宿舍",
+   "G区宿舍"
+  ],
+  "生活区快递点": [
+   "大学生活动中心",
+   "南食堂"
+  ],
+  "生活区超市": [
+   "大学生活动中心",
+   "南食堂"
+  ],
+  "生活区一卡通": [
+   "大学生活动中心",
+   "南食堂"
+  ],
+  "教学区": [
+   "行知楼",
+   "元培楼",
+   "叔愚楼",
+   "鹤琴楼",
+   "崇一楼文科组团",
+   "工科楼"
+  ],
+  "教学区空调": [
+   "行知楼",
+   "元培楼",
+   "叔愚楼",
+   "鹤琴楼"
+  ],
+  "风雨操场": [
+   "风雨操场"
+  ],
+  "体育馆": [
+   "体育馆(人字坡顶)"
+  ]
+ },
+ "alerts_by_place": {
+  "宿舍区浴室": {
+   "n": 36,
+   "red": 0,
+   "orange": 36,
+   "yellow": 0,
+   "closed": 24,
+   "items": [
+    {
+     "id": 502,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:14:45",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 499,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:12:58",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 488,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:49:51",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 473,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:26:39",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 472,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:26:01",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 445,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T10:19:58",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 437,
+     "level": "orange",
+     "status": "closed",
+     "created_at": "2026-11-21T19:48:42",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 432,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-21T19:00:17",
+     "content": "浴室改造迟迟不完工，全楼同学洗澡都要排队一小时，大家都在吐槽。",
+     "handler": ""
+    }
+   ]
+  },
+  "生活区快递点": {
+   "n": 50,
+   "red": 0,
+   "orange": 50,
+   "yellow": 0,
+   "closed": 37,
+   "items": [
+    {
+     "id": 501,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:14:45",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 491,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:00:48",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 487,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:49:51",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 480,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:45:36",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 475,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:28:20",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 471,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:25:49",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 465,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:21:48",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    },
+    {
+     "id": 460,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:17:09",
+     "content": "快递点排队两小时取个件，前面还有人插队吵起来了。",
+     "handler": ""
+    }
+   ]
+  },
+  "教学区": {
+   "n": 37,
+   "red": 0,
+   "orange": 37,
+   "yellow": 0,
+   "closed": 29,
+   "items": [
+    {
+     "id": 500,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:14:27",
+     "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。",
+     "handler": ""
+    },
+    {
+     "id": 492,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:01:00",
+     "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。",
+     "handler": ""
+    },
+    {
+     "id": 485,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:49:50",
+     "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。",
+     "handler": ""
+    },
+    {
+     "id": 482,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:47:21",
+     "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。",
+     "handler": ""
+    },
+    {
+     "id": 481,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:46:31",
+     "content": "教学楼WiFi全面瘫痪，网课都上不了，好多人都在抱怨。",
+     "handler": ""
+    },
+    {
+     "id": 459,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:16:56",
+     "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。",
+     "handler": ""
+    },
+    {
+     "id": 453,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:11:31",
+     "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。",
+     "handler": ""
+    },
+    {
+     "id": 447,
+     "level": "orange",
+     "status": "closed",
+     "created_at": "2026-11-23T10:20:21",
+     "content": "选课系统崩了整整一天，大四的学分还没选上，一群人干着急。",
+     "handler": "演练台账（系统补录）"
+    }
+   ]
+  },
+  "风雨操场": {
+   "n": 46,
+   "red": 10,
+   "orange": 36,
+   "yellow": 0,
+   "closed": 33,
+   "items": [
+    {
+     "id": 496,
+     "level": "red",
+     "status": "pending",
+     "created_at": "2026-11-24T16:03:44",
+     "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。",
+     "handler": ""
+    },
+    {
+     "id": 493,
+     "level": "red",
+     "status": "pending",
+     "created_at": "2026-11-24T16:01:17",
+     "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。",
+     "handler": ""
+    },
+    {
+     "id": 452,
+     "level": "red",
+     "status": "pending",
+     "created_at": "2026-11-23T11:10:05",
+     "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。",
+     "handler": ""
+    },
+    {
+     "id": 396,
+     "level": "red",
+     "status": "closed",
+     "created_at": "2026-11-18T14:54:24",
+     "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 365,
+     "level": "red",
+     "status": "closed",
+     "created_at": "2026-11-10T19:16:38",
+     "content": "两栋楼的同学约好了周末聚众斗殴，起因是篮球场冲突。",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 285,
+     "level": "orange",
+     "status": "closed",
+     "created_at": "2026-10-27T17:56:01",
+     "content": "球场晚上十点还大声放音响，去沟通还吵了一架，太气人了。",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 280,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-10-27T17:53:40",
+     "content": "今天天气真好，去操场跑了两圈。",
+     "handler": ""
+    },
+    {
+     "id": 270,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-10-27T17:45:43",
+     "content": "球场晚上十点还大声放音响，去沟通还吵了一架，太气人了。",
+     "handler": ""
+    }
+   ]
+  },
+  "南食堂": {
+   "n": 46,
+   "red": 0,
+   "orange": 46,
+   "yellow": 0,
+   "closed": 34,
+   "items": [
+    {
+     "id": 495,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:03:33",
+     "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。",
+     "handler": ""
+    },
+    {
+     "id": 486,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:49:50",
+     "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。",
+     "handler": ""
+    },
+    {
+     "id": 483,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:48:01",
+     "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 479,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:44:16",
+     "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。",
+     "handler": ""
+    },
+    {
+     "id": 470,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:25:35",
+     "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 468,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:24:42",
+     "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 466,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:22:27",
+     "content": "食堂涨价了，套餐从 12 涨到 16，大家都在吐槽。",
+     "handler": ""
+    },
+    {
+     "id": 464,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:21:36",
+     "content": "曝光！学校食堂吃出异物，同学们都在评论区反映。",
+     "handler": ""
+    }
+   ]
+  },
+  "学生宿舍区": {
+   "n": 50,
+   "red": 0,
+   "orange": 50,
+   "yellow": 0,
+   "closed": 40,
+   "items": [
+    {
+     "id": 490,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-24T16:00:34",
+     "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。",
+     "handler": ""
+    },
+    {
+     "id": 469,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:24:53",
+     "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。",
+     "handler": ""
+    },
+    {
+     "id": 458,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-23T11:16:16",
+     "content": "宿舍楼停水第三天了，楼下全是排队打水的人，到底什么时候修？",
+     "handler": ""
+    },
+    {
+     "id": 446,
+     "level": "orange",
+     "status": "closed",
+     "created_at": "2026-11-23T10:20:09",
+     "content": "宿舍楼停水第三天了，楼下全是排队打水的人，到底什么时候修？",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 431,
+     "level": "orange",
+     "status": "closed",
+     "created_at": "2026-11-21T19:00:04",
+     "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 428,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-21T18:56:53",
+     "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。",
+     "handler": ""
+    },
+    {
+     "id": 417,
+     "level": "orange",
+     "status": "closed",
+     "created_at": "2026-11-21T18:46:11",
+     "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。",
+     "handler": "演练台账（系统补录）"
+    },
+    {
+     "id": 403,
+     "level": "orange",
+     "status": "pending",
+     "created_at": "2026-11-18T17:31:27",
+     "content": "突然通知加收住宿费，也没提前说明，很多同学都不满。",
+     "handler": ""
+    }
+   ]
+  }
+ },
+ "total_located": 265,
+ "track_note": "本数据绑定在「布局白模」轨道（data/layout.csv）：楼栋中文名可靠，但坐标为布局级示意、非测绘成果；与精细几何轨道（官方总平面图逐像素提取）的逐栋对应需人工指认一次（docs/楼栋指认.html → data/name_id_map.json）",
+ "position_caveat": "舆情位置为正文文本线索推断的疑似发生地，不作责任认定依据"
+}
