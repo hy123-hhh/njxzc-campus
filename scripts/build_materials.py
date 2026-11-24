@@ -439,7 +439,7 @@ def build_parts(polys, details=None):
     # 地基底板：把图纸地面“托”在一块实土色薄板上，避免建筑像悬空贴图
     slab = TMesh()
     X0, Z0, X1, Z1 = -505, -668, 505, 668
-    y0, y1 = -0.6, 0.0
+    y0, y1 = -0.6, -0.12
     slab.quad([(X0, y1, Z0), (X1, y1, Z0), (X1, y1, Z1), (X0, y1, Z1)], (0, 1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
     slab.quad([(X0, y0, Z1), (X1, y0, Z1), (X1, y0, Z0), (X0, y0, Z0)], (0, -1, 0), [(0, 0), (1, 0), (1, 1), (0, 1)])
     slab.quad([(X0, y0, Z0), (X1, y0, Z0), (X1, y1, Z0), (X0, y1, Z0)], (0, 0, -1), [(0, 0), (1, 0), (1, 1), (0, 1)])
@@ -1035,7 +1035,7 @@ h3{font-size:14px;font-weight:600;margin:0 0 8px}.sub,.note{color:#57606a;font-s
 .status{background:#f6f8fa;border:1px solid #d8dee4;border-left:3px solid #1f6feb;padding:10px 14px;margin:14px 0 18px;font-size:13px}
 .split{display:flex;gap:16px;flex-wrap:wrap}.pane{flex:1 1 360px;min-width:290px;border:1px solid #d8dee4;padding:10px}
 .pane img{width:100%;display:block;border:1px solid #eaeef2}
-canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;display:block;cursor:grab}
+canvas{width:100%;height:auto;background:#eef3f7;border:1px solid #eaeef2;display:block;cursor:grab}
 .ctl{font-size:12.5px;color:#57606a;margin-top:8px}button{border:1px solid #d8dee4;background:#f6f8fa;padding:3px 10px;cursor:pointer}
 .note{background:#f6f8fa;border:1px solid #eaeef2;padding:10px 14px;margin:12px 0}
 </style></head><body>
@@ -1050,6 +1050,8 @@ canvas{width:100%;height:580px;background:#eef3f7;border:1px solid #eaeef2;displ
 <h2>校园地图与三维预览</h2>
 <div class="ctl"><button onclick="setView(2)">俯视地图</button> <button onclick="setView(3)">三维预览</button> <button onclick="setView(4)">R2效果视角</button>
 <span id="hint">默认俯视图：真实规划图 + 楼栋填色 + 中文标注 + 100m 比例尺</span></div>
+<div class="ctl"><label>宿舍楼 <select id="dormPick"><option value="">选择宿舍</option></select></label>
+<label> 楼层 <select id="floorPick" disabled><option value="0">整栋</option><option value="1">1 层</option><option value="2">2 层</option><option value="3">3 层</option><option value="4">4 层</option><option value="5">5 层</option><option value="6">6 层</option></select></label> <span>规划图楼层示意</span></div>
 <canvas id="cv" width="1400" height="920" style="width:100%;max-width:1400px"></canvas>
 <div class="ctl" id="ctl3d" style="display:none">左右拖动旋转，上下平移，滚轮缩放　<button onclick="resetView()">重置视角</button>
 <label><input type="checkbox" id="ground" checked onchange="draw()"> 规划图地面</label>
@@ -1289,11 +1291,12 @@ for(let i=0;i<T;i++){const x1=xe-W*i,x0=x1-W,h=BH*(i+1);
 const a=[x0,h,cz-L/2],b=[x1,h,cz-L/2],c=[x1,h,cz+L/2],d=[x0,h,cz+L/2];
 poly3([proj(a[0],a[1],a[2]),proj(b[0],b[1],b[2]),proj(c[0],c[1],c[2]),proj(d[0],d[1],d[2])],i%2?'#cfc9bb':'#d9dde0');
 poly3([proj(x1,0,cz-L/2),proj(x1,0,cz+L/2),proj(x1,h,cz+L/2),proj(x1,h,cz-L/2)],i%2?'#b5bcc4':'#c4cad2');}});}
+function viewDepth(x,z){return (Math.cos(ang)+Math.sin(ang))*x+(Math.cos(ang)-Math.sin(ang))*z;}
 function draw3D(){sc=baseScale()*zoom;
 if(walkMode){drawWalk();return;}
 fillBg();drawBase();if(document.getElementById('ground').checked)drawGround();drawFields();
-const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+p[0]+p[1],0)/r.p.length,f:()=>drawRec(r)}))
-.concat(TREES.map(t=>({s:t.x+t.z,f:()=>drawTree(t)}))).sort((a,b)=>a.s-b.s);
+const order=DATA.map(r=>({s:r.p.reduce((q,p)=>q+viewDepth(p[0],p[1]),0)/r.p.length,f:()=>drawRec(r)}))
+.concat(TREES.map(t=>({s:viewDepth(t.x,t.z),f:()=>drawTree(t)}))).sort((a,b)=>a.s-b.s);
 order.forEach(o=>o.f());
 function drawRec(r){const p=r.p;if(p.length<3)return;
 if(r.c!=='building'){return;}
@@ -1371,7 +1374,7 @@ drawMaotou(p,h);
     const cs=corners.map(p=>camSpace(p[0],0,p[1]));
     if(cs.some(q=>q[1]<0.35))continue;
     const P=cs.map(q=>wproj(q));
-    if(P.every(p=>p[0]<-100||p[0]>cv.width+100||p[1]<-100||p[1]>cv.height+100))continue;
+    if(P.every(p=>p[0]<-100)||P.every(p=>p[0]>cv.width+100)||P.every(p=>p[1]<-100)||P.every(p=>p[1]>cv.height+100))continue;
     const uv=corners.map(p=>[U(p[0]),V(p[1])]);
     const dd=cs.reduce((s2,q)=>s2+q[1],0)/4;
     tris.push({P,uv,d:dd});}}
@@ -1422,7 +1425,7 @@ DETAILS.forEach(d=>drawDetail(d));
 drawLabels();
 }
 function draw2D(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#eef3f7';ctx.fillRect(0,0,cv.width,cv.height);
-const scm=(cv.width*0.9)/994.5,ox=cv.width/2,oy=cv.height/2;
+const {scale:scm,x:ox,y:oy}=mapFrame();
 const W=994.5*scm,Hh=1322.1*scm;
 if(GIMG.complete&&GIMG.naturalWidth){ctx.drawImage(GIMG,ox-497.24*scm,oy-661.05*scm,W,Hh);}
 const S=(x,z)=>[ox+x*scm,oy+z*scm];
@@ -1446,7 +1449,76 @@ const nx=cv.width-34,ny=34;ctx.strokeStyle='#333';ctx.fillStyle='#333';ctx.lineW
 ctx.beginPath();ctx.moveTo(nx,ny+14);ctx.lineTo(nx,ny-10);ctx.stroke();
 ctx.beginPath();ctx.moveTo(nx-5,ny-3);ctx.lineTo(nx,ny-12);ctx.lineTo(nx+5,ny-3);ctx.closePath();ctx.fill();
 ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('N',nx,ny+26);}
-function draw(){if(view===2)draw2D();else draw3D();}
+const dormIds={"151,-386":"building_010","113,-355":"building_012","172,-356":"building_013","208,-333":"building_014","111,-324":"building_015","203,-300":"building_016","127,-292":"building_019","283,-167":"building_028","372,-164":"building_029","289,-140":"building_030","372,-137":"building_031","199,-138":"building_033","379,-107":"building_034","236,-106":"building_035","291,-108":"building_036","215,-33":"building_039","280,-27":"building_040","209,-1":"building_041","264,5":"building_044","192,33":"building_045","272,36":"building_046","76,70":"building_047","162,82":"building_049","88,106":"building_051","160,109":"building_052","90,130":"building_055","167,141":"building_056","93,164":"building_058","164,176":"building_059","96,197":"building_062"};
+const dormPicker=document.getElementById('dormPick');
+const floorPicker=document.getElementById('floorPick');
+const dormList=[];
+for(const record of DATA){
+  if(record.c!=='building'||!record.p.length)continue;
+  const center=record.p.reduce(([x,z],[px,pz])=>[x+px,z+pz],[0,0]).map(v=>Math.round(v/record.p.length));
+  const id=dormIds[center.join(',')];
+  if(id)dormList.push({id,points:record.p,center});
+}
+dormList.sort((a,b)=>a.id.localeCompare(b.id));
+for(const {id} of dormList)dormPicker.add(new Option('宿舍 · '+id,id));
+function fits(points,x,y){
+  let inside=false;
+  for(let i=0,j=points.length-1;i<points.length;j=i++){
+    const [a,b]=points[i],[c,d]=points[j];
+    if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)inside=!inside;
+  }
+  return inside;
+}
+function mapFrame(){
+  return {scale:Math.min(cv.width*.9/994.5,cv.height*.94/1322.1),x:cv.width/2,y:cv.height/2};
+}
+function dormProjection(x,y,z){
+  if(view!==2)return proj(x,y,z);
+  const frame=mapFrame();
+  return [frame.x+x*frame.scale,frame.y+z*frame.scale];
+}
+function dormFaces(points,low,high){
+  const top=points.map(([x,z])=>dormProjection(x,high,z));
+  if(view===2)return [top];
+  const bottom=points.map(([x,z])=>dormProjection(x,low,z));
+  return [top,...top.map((point,i)=>{
+    const next=(i+1)%top.length;
+    return [point,top[next],bottom[next],bottom[i]];
+  })];
+}
+function markDorm(){
+  const dorm=dormList.find(item=>item.id===dormPicker.value);
+  if(!dorm||walkMode)return;
+  const floor=Number(floorPicker.value);
+  const low=floor?(floor-1)*3.2:0,high=floor?floor*3.2:20.4;
+  ctx.save();ctx.fillStyle='rgba(22,182,171,.43)';ctx.strokeStyle='#047a75';ctx.lineWidth=2;
+  for(const face of dormFaces(dorm.points,low,high)){
+    ctx.beginPath();face.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    ctx.closePath();ctx.fill();ctx.stroke();
+  }
+  ctx.restore();
+}
+function chooseDorm(id){
+  dormPicker.value=id;floorPicker.value='0';
+  floorPicker.disabled=!id||view===2||walkMode;
+  draw();
+}
+dormPicker.addEventListener('change',()=>chooseDorm(dormPicker.value));
+floorPicker.addEventListener('change',draw);
+let dormPress;
+cv.addEventListener('pointerdown',e=>{
+  dormPress=!walkMode&&e.isPrimary&&e.button===0?[e.clientX,e.clientY]:null;
+});
+cv.addEventListener('pointercancel',()=>{dormPress=null;});
+cv.addEventListener('pointerup',e=>{
+  if(!dormPress||Math.hypot(e.clientX-dormPress[0],e.clientY-dormPress[1])>6||walkMode)return;
+  dormPress=null;
+  const [x,y]=mouseXY(e);
+  const hit=dormList.filter(dorm=>dormFaces(dorm.points,0,20.4).some(face=>fits(face,x,y)))
+    .sort((a,b)=>view===2?0:viewDepth(...b.center)-viewDepth(...a.center))[0];
+  chooseDorm(hit?.id||'');
+});
+function draw(){if(view===2)draw2D();else draw3D();floorPicker.disabled=!dormPicker.value||view===2||walkMode;markDorm();}
 function resetView(){ang=-.62;zoom=1;panX=0;panY=140;draw();}
 function setView(v){view=v;document.getElementById('ctl3d').style.display=(v===3||v===4)?'block':'none';
 if(v===4){ang=-.72;zoom=1.85;panX=-60;panY=180;} // R2效果图式近景斜俯视
@@ -1471,7 +1543,7 @@ window.addEventListener('mouseup',()=>{drag=false;cv.style.cursor='grab';});
 window.addEventListener('mousemove',e=>{const mm=mouseXY(e);if(walkMode){if(drag){camYaw+=(mm[0]-lx)*.006;
 camPitch=Math.max(-1.25,Math.min(1.25,camPitch-(mm[1]-ly)*.004));draw();}lx=mm[0];ly=mm[1];return;}
 if(!drag)return;ang+=(mm[0]-lx)*.008;panY+=(mm[1]-ly)*.5;lx=mm[0];ly=mm[1];draw();});
-cv.addEventListener('wheel',e=>{if(walkMode)return;e.preventDefault();zoom*=e.deltaY>0?.9:1.1;draw();},{passive:false});
+cv.addEventListener('wheel',e=>{if(walkMode)return;e.preventDefault();if(view===2)return;const [x,y]=mouseXY(e),next=Math.max(.55,Math.min(9,zoom*(e.deltaY>0?.9:1.1)));const ratio=next/zoom;panX=(x-cv.width/2)*(1-ratio)+panX*ratio;panY=(y-cv.height/2)*(1-ratio)+panY*ratio;zoom=next;draw();},{passive:false});
 window.addEventListener('keydown',e=>{if(!walkMode)return;const k=e.key.toLowerCase();walkKeys[k]=true;
 if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();
 if(k==='escape'){if(mapZoom){mapZoom=false;draw();}else toggleWalk();}});
