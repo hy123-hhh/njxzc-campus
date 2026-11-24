@@ -62,18 +62,6 @@ jobs:
       - name: Apply procedural materials and lighting preview
         run: python scripts/build_materials.py
 
-      - name: Commit generated geometry
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/outlines.json data/trees.json data/extract_stats.json data/scale_info.json data/refine_report.json docs/outline_overlay.jpg docs/scale_crop.png docs/离线预览.html docs/materials/ models/
-          if git diff --staged --quiet; then
-            echo "无变化，跳过提交"
-          else
-            git commit -m "feat: 按官方总平面图逐像素提取真实轮廓并挤出三维模型 [skip ci]"
-            git push
-          fi
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
@@ -95,3 +83,15 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Commit generated geometry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/outlines.json data/trees.json data/extract_stats.json data/scale_info.json data/refine_report.json docs/outline_overlay.jpg docs/scale_crop.png docs/离线预览.html docs/materials/ models/
+          if git diff --staged --quiet; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "feat: 按官方总平面图逐像素提取真实轮廓并挤出三维模型 [skip ci]"
+            git push
+          fi
