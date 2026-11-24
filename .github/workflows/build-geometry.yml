@@ -18,6 +18,7 @@ on:
       - '.github/workflows/build-geometry.yml'
 
 permissions:
+  actions: read
   contents: write
   pages: write
   id-token: write
